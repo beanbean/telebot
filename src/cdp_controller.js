@@ -1,4 +1,4 @@
-const CDP = require('chrome-remote-interface');
+const OriginalCDP = require('chrome-remote-interface');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -177,6 +177,28 @@ function withTimeout(promise, ms, errorMsg) {
         clearTimeout(timeoutId);
     });
 }
+
+const CDP = async (options) => {
+    // 1. Connection Timeout
+    const client = await withTimeout(OriginalCDP(options), 5000, "CDP Connect Timeout");
+    
+    // 2. Global CDP Command Timeout
+    // When IDE freezes, ANY CDP command (like Runtime.enable, Runtime.evaluate, etc) can hang indefinitely.
+    // By wrapping client.send, we enforce a global timeout for all operations.
+    if (typeof client.send === 'function') {
+        const originalSend = client.send.bind(client);
+        client.send = async (method, params) => {
+            // Provide larger timeouts for certain operations that might legitimately take longer
+            let timeoutMs = 8000;
+            if (method.includes('captureScreenshot')) timeoutMs = 15000;
+            if (method.includes('Runtime.evaluate') && params?.awaitPromise) timeoutMs = 12000;
+            
+            return await withTimeout(originalSend(method, params), timeoutMs, `CDP ${method} Timeout`);
+        };
+    }
+
+    return client;
+};
 
 function httpGet(url, timeoutMs = 5000) {
     return new Promise((resolve, reject) => {

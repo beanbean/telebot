@@ -160,7 +160,8 @@ function checkAuth(ctx, next) {
             const alertMsg = `⚠️ <b>Yetkisiz Erişim Denemesi!</b>\n\n👤 <b>Kişi:</b> ${fullName}\n🔖 <b>Kullanıcı Adı:</b> ${username}\n🆔 <b>ID:</b> <code>${from.id}</code>\n💬 <b>${actionDetails}</b>`;
             ctx.telegram.sendMessage(ALLOWED_CHAT_ID, alertMsg, { parse_mode: 'HTML' }).catch(e => console.error('[checkAuth Alert]', e.message));
         }
-        return ctx.reply(t('auth.unauthorized')).catch(e => console.error('[checkAuth]', e.message));
+        // Silently ignore unauthorized access to prevent errors if the user blocked the bot
+        return Promise.resolve();
     }
     return next();
 }
