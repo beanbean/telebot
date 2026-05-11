@@ -117,6 +117,7 @@ function killIDE() {
                 // Kill ALL antigravity-related processes including child processes
                 // (chrome-sandbox, crashpad_handler, language_server, utility processes)
                 cmd = [
+                    `pkill -9 -x "${config.processName}" 2>/dev/null`,
                     `pkill -9 -f "${config.ideBinary}" 2>/dev/null`,
                     `pkill -9 -f "antigravity-launcher" 2>/dev/null`,
                     `pkill -9 -f "chrome_crashpad_handler" 2>/dev/null`,
