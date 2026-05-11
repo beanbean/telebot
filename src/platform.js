@@ -292,10 +292,16 @@ function launchIDE(workspace, port = 9333) {
             delete cleanEnv.WAYLAND_DISPLAY;
 
             if (isRunning && PLATFORM === 'linux') {
-                // Use execSync for cli.js IPC call — must complete synchronously
-                // for the IPC message to be fully delivered before Node moves on.
                 const { execSync } = require('child_process');
                 try {
+                    // Dynamically find the active IPC socket to prevent cli.js from spawning a new instance
+                    const socketCmd = 'find /run/user/$(id -u)/ -name "vscode-*-main.sock" -type s 2>/dev/null | head -1';
+                    const activeSocket = execSync(socketCmd, { encoding: 'utf8' }).trim();
+                    if (activeSocket) {
+                        cleanEnv.VSCODE_IPC_HOOK = activeSocket;
+                    }
+                    
+                    // Use execSync for cli.js IPC call — must complete synchronously
                     execSync(cmd, { env: cleanEnv, timeout: 15000, stdio: 'pipe' });
                     console.log('[platform] launchIDE execSync completed successfully');
                     resolve();
