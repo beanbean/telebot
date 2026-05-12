@@ -189,6 +189,10 @@ antigravity-telegram-suite/
 - **[acmavirus/antigravity-telegram-control](https://github.com/acmavirus/antigravity-telegram-control)** — Bu projeye temel oluşturan temiz, açık kaynaklı Telegram entegrasyonu için.
 - **[yazanbaker94/AntiGravity-AutoAccept](https://github.com/yazanbaker94/AntiGravity-AutoAccept)** — Otomatik tıklama (Auto-Accept) modülündeki DOM observer yapısına ilham veren projesi için.
 
+
+## 🌟 Teşekkürler ve İlham Kaynağı
+Çoklu ajan (multi-agent) **Turbo Modu (v3)** orkestrasyon mimarisi, Interdesigncorp Lab tarafından geliştirilen [Agents-Council](https://github.com/interdesigncorp-lab/Agents-Council) reposundan ilham alınarak tasarlanmıştır.
+
 ## 📄 Lisans
 
 Bu proje MIT Lisansı altında lisanslanmıştır — detaylar için [LICENSE](LICENSE) dosyasına bakın.

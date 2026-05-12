@@ -189,6 +189,10 @@ antigravity-telegram-suite/
 - **[acmavirus/antigravity-telegram-control](https://github.com/acmavirus/antigravity-telegram-control)** — Eine saubere Open-Source Telegram-Integration als Basis.
 - **[yazanbaker94/AntiGravity-AutoAccept](https://github.com/yazanbaker94/AntiGravity-AutoAccept)** — Inspiration für das Auto-Accept-Modul.
 
+
+## 🌟 Danksagungen & Inspirationen
+Die Multi-Agenten-Orchestrierung **Turbo Modus (v3)** wurde stark von der Architektur des [Agents-Council](https://github.com/interdesigncorp-lab/Agents-Council) Repositorys von Interdesigncorp Lab inspiriert.
+
 ## 📄 Lizenz
 
 Dieses Projekt ist unter der MIT-Lizenz lizenziert — siehe [LICENSE](LICENSE) für Details.

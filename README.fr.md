@@ -123,6 +123,10 @@ pm2 startup
 4. Poussez vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
 5. Ouvrez une Pull Request
 
+
+## 🌟 Crédits et Inspirations
+L'orchestration multi-agents du **Mode Turbo (v3)** a été profondément inspirée par l'architecture du dépôt [Agents-Council](https://github.com/interdesigncorp-lab/Agents-Council) par Interdesigncorp Lab.
+
 ## 📄 Licence
 
 Ce projet est sous licence MIT — voir le fichier [LICENSE](LICENSE) pour plus de détails.

@@ -176,6 +176,10 @@ antigravity-telegram-suite/
 4. Empuja a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Abre un Pull Request
 
+
+## 🌟 Créditos e Inspiraciones
+La orquestación de múltiples agentes del **Modo Turbo (v3)** fue profundamente inspirada en la arquitectura del repositorio [Agents-Council](https://github.com/interdesigncorp-lab/Agents-Council) de Interdesigncorp Lab.
+
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT — ver el archivo [LICENSE](LICENSE) para más detalles.
