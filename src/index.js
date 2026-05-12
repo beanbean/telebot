@@ -1448,17 +1448,7 @@ bot.on('text', (ctx) => {
                 if (!text) text = t('ask.done_empty');
                 const header = await getChatHeader(targetId, t('ask.done'));
                 
-                let wsName = 'Bilinmiyor';
-                let modelName = 'Model Seçilmedi';
-                try {
-                    const info = await getActiveThreadInfo(CDP_PORT, targetId);
-                    if (info && info.workspace) wsName = info.workspace;
-                    const m = await getCurrentModel(CDP_PORT);
-                    if (m) modelName = m;
-                } catch(e) {}
-                const buttons = Markup.keyboard([
-                    [`📂 ${wsName}`, `🤖 ${modelName}`]
-                ]).resize();
+                const buttons = await buildMainMenu();
                 
                 const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.message.message_id);
                 if (sentIds && sentIds.length > 0 && targetId) {
@@ -1537,17 +1527,7 @@ bot.on(['photo', 'document'], (ctx) => {
                 if (!text) text = t('ask.done_empty');
                 const header = await getChatHeader(targetId, t('ask.done'));
                 
-                let wsName = 'Bilinmiyor';
-                let modelName = 'Model Seçilmedi';
-                try {
-                    const info = await getActiveThreadInfo(CDP_PORT, targetId);
-                    if (info && info.workspace) wsName = info.workspace;
-                    const m = await getCurrentModel(CDP_PORT);
-                    if (m) modelName = m;
-                } catch(e) {}
-                const buttons = Markup.keyboard([
-                    [`📂 ${wsName}`, `🤖 ${modelName}`]
-                ]).resize();
+                const buttons = await buildMainMenu();
                 
                 const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.message.message_id);
                 if (sentIds && sentIds.length > 0 && targetId) {
