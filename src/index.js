@@ -388,7 +388,7 @@ async function buildMainMenu() {
         [
             t('menu.btn_screenshot') || '📸 Ekran', 
             t('menu.btn_artifacts') || "📦 Artifact'ler", 
-            isTurboMode ? '🚀 Turbo ✅' : '🚀 Turbo', 
+            isTurboMode ? (t('turbo.btn_on') || '🚀 Turbo ✅') : (t('turbo.btn_off') || '🚀 Turbo'), 
             t('menu.btn_latest') || '💬 Son Yanıt'
         ]
     ]).resize();
@@ -1473,13 +1473,10 @@ async function handleTurbo(ctx) {
             turboPinnedMsgId = null;
         }
         saveTurboState();
-        await sendMainMenu(ctx, '🛑 Turbo Mod Kapatıldı.\nNormal asistan moduna dönüldü.');
+        await sendMainMenu(ctx, t('turbo.off') || '🛑 Turbo Mod Kapatıldı.\nNormal asistan moduna dönüldü.');
     } else {
         const msg = await ctx.reply(
-            '⚡ <b>TURBO MOD AKTİF</b> ⚡\n\n' +
-            '⚠️ <b>Dikkat:</b> Bu modda gönderdiğiniz talepler Claude ve Gemini tarafından sırayla (Planlama -> Kodlama -> İnceleme) ' +
-            'işlenecektir. Kodlar kendi aralarında düzenlenip inceleneceği için <b>daha fazla token harcanır.</b>\n\n' +
-            'Bu modu kapatmak için tekrar <code>/turbo</code> yazabilir veya menüdeki butona tıklayabilirsiniz.', 
+            t('turbo.on_msg') || '⚡ <b>TURBO MOD AKTİF</b> ⚡\n\n⚠️ <b>Dikkat:</b> Bu modda gönderdiğiniz talepler Claude ve Gemini tarafından sırayla (Planlama -> Kodlama -> İnceleme) işlenecektir. Kodlar kendi aralarında düzenlenip inceleneceği için <b>daha fazla token harcanır.</b>\n\nBu modu kapatmak için tekrar <code>/turbo</code> yazabilir veya menüdeki butona tıklayabilirsiniz.', 
             { parse_mode: 'HTML' }
         );
         turboPinnedMsgId = msg.message_id;
@@ -1487,7 +1484,7 @@ async function handleTurbo(ctx) {
             await ctx.telegram.pinChatMessage(ctx.chat.id, turboPinnedMsgId);
         } catch (e) {}
         saveTurboState();
-        await sendMainMenu(ctx, '🚀 Turbo Mod devrede!');
+        await sendMainMenu(ctx, t('turbo.on_toast') || '🚀 Turbo Mod devrede!');
     }
 }
 

@@ -201,5 +201,27 @@
     "invalid_number": "❌ Geçersiz artifact numarası.",
     "sending": "📤 Gönderiliyor: <b>{name}</b>...",
     "error": "❌ Artifact okuma hatası: {error}"
+  },
+  "turbo": {
+    "off": "🛑 Turbo Mod Kapatıldı.\nNormal asistan moduna dönüldü.",
+    "on_msg": "⚡ <b>TURBO MOD AKTİF</b> ⚡\n\n⚠️ <b>Dikkat:</b> Bu modda gönderdiğiniz talepler Claude ve Gemini tarafından sırayla (Planlama -> Kodlama -> İnceleme) işlenecektir. Kodlar kendi aralarında düzenlenip inceleneceği için <b>daha fazla token harcanır.</b>\n\nBu modu kapatmak için tekrar <code>/turbo</code> yazabilir veya menüdeki butona tıklayabilirsiniz.",
+    "on_toast": "🚀 Turbo Mod devrede!",
+    "btn_on": "🚀 Turbo ✅",
+    "btn_off": "🚀 Turbo",
+    "p1_start": "🚀 <b>Turbo Mod Başlatıldı:</b>\n\n⏳ <b>Faz 1:</b> Model seçiliyor (Claude)...",
+    "p1_planning": "🚀 <b>Turbo Mod Başlatıldı:</b>\n\n⏳ <b>Faz 1:</b> Claude planı hazırlıyor...",
+    "p1_error": "Claude planlama aşamasında zaman aşımına uğradı.",
+    "p2_switching": "🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Claude planı tamamladı.\n⏳ <b>Faz 2:</b> Model değiştiriliyor (Gemini)...",
+    "p2_coding": "🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Claude planı tamamladı.\n⏳ <b>Faz 2:</b> Gemini kodları yazıyor...",
+    "p2_error": "Gemini kodlama aşamasında zaman aşımına uğradı.",
+    "p3_switching": "🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⏳ <b>Faz 3:</b> Model değiştiriliyor (Claude) - İnceleme...",
+    "p3_reviewing": "🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⏳ <b>Faz 3:</b> Claude yazılan kodu inceliyor...",
+    "p3_error": "Claude inceleme aşamasında zaman aşımına uğradı.",
+    "p4_switching": "🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⚠️ <b>Faz 3:</b> Hatalar bulundu!\n⏳ <b>Faz 4:</b> Model değiştiriliyor (Gemini) - Düzeltme...",
+    "p4_fixing": "🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⚠️ <b>Faz 3:</b> Hatalar bulundu!\n⏳ <b>Faz 4:</b> Gemini hataları düzeltiyor...",
+    "p4_error": "Gemini düzeltme aşamasında zaman aşımına uğradı.",
+    "done_issues": "🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n⚠️ <b>Faz 3:</b> İnceleme (Claude)\n✅ <b>Faz 4:</b> Düzeltme (Gemini)\n\n✨ Sonuçlar geliyor...",
+    "done_no_issues": "🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n✅ <b>Faz 3:</b> İnceleme - Sorun Yok (Claude)\n\n✨ Sonuçlar geliyor...",
+    "error_title": "❌ <b>Turbo Mod Hatası:</b>\n\n{error}"
   }
 }

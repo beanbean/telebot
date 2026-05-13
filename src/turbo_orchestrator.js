@@ -5,6 +5,7 @@ const {
     waitForAgentResponse,
     getFullLatestResponse,
 } = require('./cdp_controller');
+const { t } = require('./i18n');
 
 /**
  * Runs the Multi-Agent "Agents Council" workflow.
@@ -18,7 +19,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
 
     try {
         // Send initial status
-        const statusMsg = await ctx.reply('🚀 <b>Turbo Mod Başlatıldı:</b>\n\n⏳ <b>Faz 1:</b> Model seçiliyor (Claude)...', { parse_mode: 'HTML' });
+        const statusMsg = await ctx.reply(t('turbo.p1_start') || '🚀 <b>Turbo Mod Başlatıldı:</b>\n\n⏳ <b>Faz 1:</b> Model seçiliyor (Claude)...', { parse_mode: 'HTML' });
         statusMsgId = statusMsg.message_id;
 
         // --- PHASE 1: PLANNING (Claude) ---
@@ -27,7 +28,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
 
         await ctx.telegram.editMessageText(
             ctx.chat.id, statusMsgId, null,
-            '🚀 <b>Turbo Mod Başlatıldı:</b>\n\n⏳ <b>Faz 1:</b> Claude planı hazırlıyor...',
+            t('turbo.p1_planning') || '🚀 <b>Turbo Mod Başlatıldı:</b>\n\n⏳ <b>Faz 1:</b> Claude planı hazırlıyor...',
             { parse_mode: 'HTML' }
         ).catch(() => {});
 
@@ -38,7 +39,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         await snapshotChatState(CDP_PORT).catch(() => {});
         
         let isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId);
-        if (!isDone) throw new Error("Claude planlama aşamasında zaman aşımına uğradı.");
+        if (!isDone) throw new Error(t('turbo.p1_error') || "Claude planlama aşamasında zaman aşımına uğradı.");
 
         let planText = await getFullLatestResponse(CDP_PORT, sentTargetId);
         planText = stripQueryFromResponse(planText, pmPrompt);
@@ -46,7 +47,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         // Update Telegram Status
         await ctx.telegram.editMessageText(
             ctx.chat.id, statusMsgId, null,
-            '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Claude planı tamamladı.\n⏳ <b>Faz 2:</b> Model değiştiriliyor (Gemini)...',
+            t('turbo.p2_switching') || '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Claude planı tamamladı.\n⏳ <b>Faz 2:</b> Model değiştiriliyor (Gemini)...',
             { parse_mode: 'HTML' }
         ).catch(() => {});
 
@@ -56,7 +57,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
 
         await ctx.telegram.editMessageText(
             ctx.chat.id, statusMsgId, null,
-            '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Claude planı tamamladı.\n⏳ <b>Faz 2:</b> Gemini kodları yazıyor...',
+            t('turbo.p2_coding') || '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Claude planı tamamladı.\n⏳ <b>Faz 2:</b> Gemini kodları yazıyor...',
             { parse_mode: 'HTML' }
         ).catch(() => {});
 
@@ -67,7 +68,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         await snapshotChatState(CDP_PORT).catch(() => {});
         
         isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId2);
-        if (!isDone) throw new Error("Gemini kodlama aşamasında zaman aşımına uğradı.");
+        if (!isDone) throw new Error(t('turbo.p2_error') || "Gemini kodlama aşamasında zaman aşımına uğradı.");
 
         let finalText = await getFullLatestResponse(CDP_PORT, sentTargetId2);
         finalText = stripQueryFromResponse(finalText, coderPrompt);
@@ -75,7 +76,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         // --- PHASE 3: REVIEW (Claude) ---
         await ctx.telegram.editMessageText(
             ctx.chat.id, statusMsgId, null,
-            '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⏳ <b>Faz 3:</b> Model değiştiriliyor (Claude) - İnceleme...',
+            t('turbo.p3_switching') || '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⏳ <b>Faz 3:</b> Model değiştiriliyor (Claude) - İnceleme...',
             { parse_mode: 'HTML' }
         ).catch(() => {});
 
@@ -84,7 +85,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
 
         await ctx.telegram.editMessageText(
             ctx.chat.id, statusMsgId, null,
-            '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⏳ <b>Faz 3:</b> Claude yazılan kodu inceliyor...',
+            t('turbo.p3_reviewing') || '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⏳ <b>Faz 3:</b> Claude yazılan kodu inceliyor...',
             { parse_mode: 'HTML' }
         ).catch(() => {});
 
@@ -95,7 +96,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         await snapshotChatState(CDP_PORT).catch(() => {});
         
         isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId3);
-        if (!isDone) throw new Error("Claude inceleme aşamasında zaman aşımına uğradı.");
+        if (!isDone) throw new Error(t('turbo.p3_error') || "Claude inceleme aşamasında zaman aşımına uğradı.");
 
         let reviewText = await getFullLatestResponse(CDP_PORT, sentTargetId3);
         reviewText = stripQueryFromResponse(reviewText, reviewPrompt);
@@ -108,7 +109,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
             // --- PHASE 4: FIX (Gemini) ---
             await ctx.telegram.editMessageText(
                 ctx.chat.id, statusMsgId, null,
-                '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⚠️ <b>Faz 3:</b> Hatalar bulundu!\n⏳ <b>Faz 4:</b> Model değiştiriliyor (Gemini) - Düzeltme...',
+                t('turbo.p4_switching') || '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⚠️ <b>Faz 3:</b> Hatalar bulundu!\n⏳ <b>Faz 4:</b> Model değiştiriliyor (Gemini) - Düzeltme...',
                 { parse_mode: 'HTML' }
             ).catch(() => {});
 
@@ -117,7 +118,7 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
 
             await ctx.telegram.editMessageText(
                 ctx.chat.id, statusMsgId, null,
-                '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⚠️ <b>Faz 3:</b> Hatalar bulundu!\n⏳ <b>Faz 4:</b> Gemini hataları düzeltiyor...',
+                t('turbo.p4_fixing') || '🚀 <b>Turbo Mod Aktif:</b>\n\n✅ <b>Faz 1:</b> Planlama\n✅ <b>Faz 2:</b> Kodlama\n⚠️ <b>Faz 3:</b> Hatalar bulundu!\n⏳ <b>Faz 4:</b> Gemini hataları düzeltiyor...',
                 { parse_mode: 'HTML' }
             ).catch(() => {});
 
@@ -128,21 +129,21 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
             await snapshotChatState(CDP_PORT).catch(() => {});
             
             isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId4);
-            if (!isDone) throw new Error("Gemini düzeltme aşamasında zaman aşımına uğradı.");
+            if (!isDone) throw new Error(t('turbo.p4_error') || "Gemini düzeltme aşamasında zaman aşımına uğradı.");
 
             let fixText = await getFullLatestResponse(CDP_PORT, sentTargetId4);
             finalText = stripQueryFromResponse(fixText, fixPrompt);
 
             await ctx.telegram.editMessageText(
                 ctx.chat.id, statusMsgId, null,
-                '🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n⚠️ <b>Faz 3:</b> İnceleme (Claude)\n✅ <b>Faz 4:</b> Düzeltme (Gemini)\n\n✨ Sonuçlar geliyor...',
+                t('turbo.done_issues') || '🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n⚠️ <b>Faz 3:</b> İnceleme (Claude)\n✅ <b>Faz 4:</b> Düzeltme (Gemini)\n\n✨ Sonuçlar geliyor...',
                 { parse_mode: 'HTML' }
             ).catch(() => {});
 
         } else {
             await ctx.telegram.editMessageText(
                 ctx.chat.id, statusMsgId, null,
-                '🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n✅ <b>Faz 3:</b> İnceleme - Sorun Yok (Claude)\n\n✨ Sonuçlar geliyor...',
+                t('turbo.done_no_issues') || '🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n✅ <b>Faz 3:</b> İnceleme - Sorun Yok (Claude)\n\n✨ Sonuçlar geliyor...',
                 { parse_mode: 'HTML' }
             ).catch(() => {});
         }
@@ -152,9 +153,10 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
     } catch (err) {
         console.error('[turbo] Orchestration error:', err.message);
         if (statusMsgId) {
+            const errTitle = t('turbo.error_title') ? t('turbo.error_title').replace('{error}', err.message) : `❌ <b>Turbo Mod Hatası:</b>\n\n${err.message}`;
             await ctx.telegram.editMessageText(
                 ctx.chat.id, statusMsgId, null,
-                `❌ <b>Turbo Mod Hatası:</b>\n\n${err.message}`,
+                errTitle,
                 { parse_mode: 'HTML' }
             ).catch(() => {});
         }

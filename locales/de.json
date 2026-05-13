@@ -201,5 +201,27 @@
     "invalid_number": "❌ Ungültige Artefakt-Nummer.",
     "sending": "📤 Artefakt wird gesendet: <b>{name}</b>...",
     "error": "❌ Fehler beim Lesen: {error}"
+  },
+  "turbo": {
+    "off": "🛑 Turbo-Modus Deaktiviert.\nZurück zum normalen Assistenten-Modus.",
+    "on_msg": "⚡ <b>TURBO-MODUS AKTIV</b> ⚡\n\n⚠️ <b>Achtung:</b> In diesem Modus werden Ihre Anfragen nacheinander von Claude und Gemini bearbeitet (Planung -> Codierung -> Überprüfung). Da Codes zwischen den Agenten überprüft und bearbeitet werden, <b>werden mehr Token verbraucht.</b>\n\nUm diesen Modus zu deaktivieren, geben Sie erneut <code>/turbo</code> ein oder klicken Sie auf die Menü-Schaltfläche.",
+    "on_toast": "🚀 Turbo-Modus aktiviert!",
+    "btn_on": "🚀 Turbo ✅",
+    "btn_off": "🚀 Turbo",
+    "p1_start": "🚀 <b>Turbo-Modus Gestartet:</b>\n\n⏳ <b>Phase 1:</b> Modell wird ausgewählt (Claude)...",
+    "p1_planning": "🚀 <b>Turbo-Modus Gestartet:</b>\n\n⏳ <b>Phase 1:</b> Claude erstellt den Plan...",
+    "p1_error": "Zeitüberschreitung von Claude in der Planungsphase.",
+    "p2_switching": "🚀 <b>Turbo-Modus Aktiv:</b>\n\n✅ <b>Phase 1:</b> Claude hat den Plan abgeschlossen.\n⏳ <b>Phase 2:</b> Modell wird gewechselt (Gemini)...",
+    "p2_coding": "🚀 <b>Turbo-Modus Aktiv:</b>\n\n✅ <b>Phase 1:</b> Claude hat den Plan abgeschlossen.\n⏳ <b>Phase 2:</b> Gemini schreibt den Code...",
+    "p2_error": "Zeitüberschreitung von Gemini in der Codierungsphase.",
+    "p3_switching": "🚀 <b>Turbo-Modus Aktiv:</b>\n\n✅ <b>Phase 1:</b> Planung\n✅ <b>Phase 2:</b> Codierung\n⏳ <b>Phase 3:</b> Modell wird gewechselt (Claude) - Überprüfung...",
+    "p3_reviewing": "🚀 <b>Turbo-Modus Aktiv:</b>\n\n✅ <b>Phase 1:</b> Planung\n✅ <b>Phase 2:</b> Codierung\n⏳ <b>Phase 3:</b> Claude überprüft den Code...",
+    "p3_error": "Zeitüberschreitung von Claude in der Überprüfungsphase.",
+    "p4_switching": "🚀 <b>Turbo-Modus Aktiv:</b>\n\n✅ <b>Phase 1:</b> Planung\n✅ <b>Phase 2:</b> Codierung\n⚠️ <b>Phase 3:</b> Probleme gefunden!\n⏳ <b>Phase 4:</b> Modell wird gewechselt (Gemini) - Behebung...",
+    "p4_fixing": "🚀 <b>Turbo-Modus Aktiv:</b>\n\n✅ <b>Phase 1:</b> Planung\n✅ <b>Phase 2:</b> Codierung\n⚠️ <b>Phase 3:</b> Probleme gefunden!\n⏳ <b>Phase 4:</b> Gemini behebt die Probleme...",
+    "p4_error": "Zeitüberschreitung von Gemini in der Behebungsphase.",
+    "done_issues": "🚀 <b>Turbo-Modus Abgeschlossen:</b>\n\n✅ <b>Phase 1:</b> Planung (Claude)\n✅ <b>Phase 2:</b> Codierung (Gemini)\n⚠️ <b>Phase 3:</b> Überprüfung (Claude)\n✅ <b>Phase 4:</b> Behebung (Gemini)\n\n✨ Ergebnisse kommen...",
+    "done_no_issues": "🚀 <b>Turbo-Modus Abgeschlossen:</b>\n\n✅ <b>Phase 1:</b> Planung (Claude)\n✅ <b>Phase 2:</b> Codierung (Gemini)\n✅ <b>Phase 3:</b> Überprüfung - Keine Probleme (Claude)\n\n✨ Ergebnisse kommen...",
+    "error_title": "❌ <b>Turbo-Modus Fehler:</b>\n\n{error}"
   }
 }

@@ -201,5 +201,27 @@
     "invalid_number": "❌ Invalid artifact number.",
     "sending": "📤 Sending artifact: <b>{name}</b>...",
     "error": "❌ Error reading artifact: {error}"
+  },
+  "turbo": {
+    "off": "🛑 Turbo Mode Disabled.\nReturned to normal assistant mode.",
+    "on_msg": "⚡ <b>TURBO MODE ACTIVE</b> ⚡\n\n⚠️ <b>Note:</b> In this mode, your requests will be processed sequentially by Claude and Gemini (Planning -> Coding -> Review). Since codes will be reviewed and edited between agents, <b>more tokens will be consumed.</b>\n\nTo disable this mode, type <code>/turbo</code> again or click the menu button.",
+    "on_toast": "🚀 Turbo Mode enabled!",
+    "btn_on": "🚀 Turbo ✅",
+    "btn_off": "🚀 Turbo",
+    "p1_start": "🚀 <b>Turbo Mode Started:</b>\n\n⏳ <b>Phase 1:</b> Selecting model (Claude)...",
+    "p1_planning": "🚀 <b>Turbo Mode Started:</b>\n\n⏳ <b>Phase 1:</b> Claude is preparing the plan...",
+    "p1_error": "Claude timed out during the planning phase.",
+    "p2_switching": "🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Claude completed the plan.\n⏳ <b>Phase 2:</b> Switching model (Gemini)...",
+    "p2_coding": "🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Claude completed the plan.\n⏳ <b>Phase 2:</b> Gemini is writing the code...",
+    "p2_error": "Gemini timed out during the coding phase.",
+    "p3_switching": "🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Planning\n✅ <b>Phase 2:</b> Coding\n⏳ <b>Phase 3:</b> Switching model (Claude) - Review...",
+    "p3_reviewing": "🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Planning\n✅ <b>Phase 2:</b> Coding\n⏳ <b>Phase 3:</b> Claude is reviewing the code...",
+    "p3_error": "Claude timed out during the review phase.",
+    "p4_switching": "🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Planning\n✅ <b>Phase 2:</b> Coding\n⚠️ <b>Phase 3:</b> Issues found!\n⏳ <b>Phase 4:</b> Switching model (Gemini) - Fixing...",
+    "p4_fixing": "🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Planning\n✅ <b>Phase 2:</b> Coding\n⚠️ <b>Phase 3:</b> Issues found!\n⏳ <b>Phase 4:</b> Gemini is fixing the issues...",
+    "p4_error": "Gemini timed out during the fixing phase.",
+    "done_issues": "🚀 <b>Turbo Mode Completed:</b>\n\n✅ <b>Phase 1:</b> Planning (Claude)\n✅ <b>Phase 2:</b> Coding (Gemini)\n⚠️ <b>Phase 3:</b> Review (Claude)\n✅ <b>Phase 4:</b> Fixing (Gemini)\n\n✨ Results incoming...",
+    "done_no_issues": "🚀 <b>Turbo Mode Completed:</b>\n\n✅ <b>Phase 1:</b> Planning (Claude)\n✅ <b>Phase 2:</b> Coding (Gemini)\n✅ <b>Phase 3:</b> Review - No Issues (Claude)\n\n✨ Results incoming...",
+    "error_title": "❌ <b>Turbo Mode Error:</b>\n\n{error}"
   }
 }
