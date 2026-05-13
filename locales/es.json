@@ -219,6 +219,9 @@
     "p4_error": "Tiempo de espera agotado para Gemini en la fase de corrección.",
     "done_issues": "🚀 <b>Modo Turbo Completado:</b>\n\n✅ <b>Fase 1:</b> Planificación (Claude)\n✅ <b>Fase 2:</b> Codificación (Gemini)\n⚠️ <b>Fase 3:</b> Revisión (Claude)\n✅ <b>Fase 4:</b> Corrección (Gemini)\n\n✨ Resultados entrantes...",
     "done_no_issues": "🚀 <b>Modo Turbo Completado:</b>\n\n✅ <b>Fase 1:</b> Planificación (Claude)\n✅ <b>Fase 2:</b> Codificación (Gemini)\n✅ <b>Fase 3:</b> Revisión - Sin Problemas (Claude)\n\n✨ Resultados entrantes...",
-    "error_title": "❌ <b>Error del Modo Turbo:</b>\n\n{error}"
+    "error_title": "❌ <b>Error del Modo Turbo:</b>\n\n{error}",
+    "p5_summarizing": "⏳ Fase 5: Preparando resumen de resultados...",
+    "done_summary": "✨ Modo Turbo Completado (Resumen listo)",
+    "p5_error": "Tiempo agotado en la fase de resumen."
   }
 }

@@ -4,10 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// Store the previous full chat state to filter out old messages
-let globalLastChatState = "";
-// Store the last successful extracted agent message
-let globalLastValidResponse = "";
 
 
 // ===== MULTI-WINDOW SUPPORT =====
@@ -82,6 +78,10 @@ function getPreferredWindow() {
     if (!preferredTargetId) return null;
     const match = windowCache.find(w => w.id === preferredTargetId);
     return match ? match.title : preferredTargetId;
+}
+
+function getPreferredTargetId() {
+    return preferredTargetId;
 }
 
 function getCachedWindows() {
@@ -269,30 +269,28 @@ function httpGet(url, timeoutMs = 5000) {
  * Snapshot the current chat state so subsequent getLatestAgentResponse
  * calls only return text that appeared AFTER this snapshot.
  */
-// Track the last seen file size for file-based diffing
-let lastSnapshotFileSize = 0;
-
 /**
  * Snapshot the current chat state for diff tracking.
- * Records the file size of the active thread's log file.
+ * DOM fallback uses globalLastChatState.
  */
-async function snapshotChatState(port) {
+async function snapshotChatState(port, specificTargetId = null) {
     try {
-        const activeId = await getActiveThreadId(port);
+        const activeId = specificTargetId || preferredTargetId || await getActiveThreadId(port);
         if (!activeId) return;
         const logPath = path.join(os.homedir(), '.gemini', 'antigravity', 'brain', activeId, '.system_generated', 'logs', 'overview.txt');
         if (!fs.existsSync(logPath)) return;
         
-        const stats = fs.statSync(logPath);
-        lastSnapshotFileSize = stats.size;
-        console.log(`[snapshot] Anchored at file size ${lastSnapshotFileSize}`);
+        console.log(`[snapshot] Anchored file-based thread: ${activeId}`);
         return;
     } catch (e) {
         console.log('[snapshot] File-based snapshot failed:', e.message);
     }
     
     // DOM fallback for legacy behavior
-    const candidates = await resolveTargets(port);
+    let candidates = await resolveTargets(port);
+    if (specificTargetId) {
+        candidates = candidates.filter(t => t.id === specificTargetId);
+    }
     for (const target of candidates) {
         try {
             const client = await CDP({ target: target.webSocketDebuggerUrl });
@@ -302,7 +300,6 @@ async function snapshotChatState(port) {
             const val = boxResult?.result?.value;
             await client.close();
             if (val && val.length > 0) {
-                globalLastChatState = val;
                 console.log(`[snapshot] DOM fallback anchored (${val.length} chars)`);
                 return;
             }
@@ -420,11 +417,6 @@ async function getFullLatestResponse(port, specificTargetId = null) {
     // --- Fallback: DOM extraction (when no preferred window or file-system failed) ---
     const domResult = await _domLatestExtraction(port, targetIdToUse);
     if (domResult) return domResult;
-    
-    // Fallback to cache if everything failed
-    if (globalLastValidResponse) {
-        return globalLastValidResponse;
-    }
     
     return "[No previous message stored yet. Run a prompt first.]";
 }
@@ -1144,6 +1136,7 @@ module.exports = {
     listWindows,
     setPreferredWindow,
     getPreferredWindow,
+    getPreferredTargetId,
     getCachedWindows,
     closeWindow,
     listAgentThreads,
@@ -1226,10 +1219,12 @@ async function getAvailableModels(port) {
     return [];
 }
 
-async function selectModel(port, modelName) {
+async function selectModel(port, modelName, specificTargetId = null) {
     const raw = await resolveTargets(port, false);
-    // Manager has the active conversation's model selector
-    const candidates = raw;
+    let candidates = raw;
+    if (specificTargetId) {
+        candidates = candidates.filter(t => t.id === specificTargetId);
+    }
 
     for (const target of candidates) {
         try {

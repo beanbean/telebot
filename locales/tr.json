@@ -222,6 +222,9 @@
     "p4_error": "Gemini düzeltme aşamasında zaman aşımına uğradı.",
     "done_issues": "🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n⚠️ <b>Faz 3:</b> İnceleme (Claude)\n✅ <b>Faz 4:</b> Düzeltme (Gemini)\n\n✨ Sonuçlar geliyor...",
     "done_no_issues": "🚀 <b>Turbo Mod Tamamlandı:</b>\n\n✅ <b>Faz 1:</b> Planlama (Claude)\n✅ <b>Faz 2:</b> Kodlama (Gemini)\n✅ <b>Faz 3:</b> İnceleme - Sorun Yok (Claude)\n\n✨ Sonuçlar geliyor...",
-    "error_title": "❌ <b>Turbo Mod Hatası:</b>\n\n{error}"
+    "error_title": "❌ <b>Turbo Mod Hatası:</b>\n\n{error}",
+    "p5_summarizing": "⏳ Faz 5: Sonuç özeti hazırlanıyor...",
+    "done_summary": "✨ Turbo Mod Tamamlandı (Özet hazır)",
+    "p5_error": "Özet aşamasında zaman aşımına uğradı."
   }
 }

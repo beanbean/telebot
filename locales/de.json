@@ -222,6 +222,9 @@
     "p4_error": "Zeitüberschreitung von Gemini in der Behebungsphase.",
     "done_issues": "🚀 <b>Turbo-Modus Abgeschlossen:</b>\n\n✅ <b>Phase 1:</b> Planung (Claude)\n✅ <b>Phase 2:</b> Codierung (Gemini)\n⚠️ <b>Phase 3:</b> Überprüfung (Claude)\n✅ <b>Phase 4:</b> Behebung (Gemini)\n\n✨ Ergebnisse kommen...",
     "done_no_issues": "🚀 <b>Turbo-Modus Abgeschlossen:</b>\n\n✅ <b>Phase 1:</b> Planung (Claude)\n✅ <b>Phase 2:</b> Codierung (Gemini)\n✅ <b>Phase 3:</b> Überprüfung - Keine Probleme (Claude)\n\n✨ Ergebnisse kommen...",
-    "error_title": "❌ <b>Turbo-Modus Fehler:</b>\n\n{error}"
+    "error_title": "❌ <b>Turbo-Modus Fehler:</b>\n\n{error}",
+    "p5_summarizing": "⏳ Phase 5: Zusammenfassung wird vorbereitet...",
+    "done_summary": "✨ Turbo-Modus Abgeschlossen (Zusammenfassung bereit)",
+    "p5_error": "Zeitüberschreitung in der Zusammenfassungsphase."
   }
 }

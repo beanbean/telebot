@@ -219,6 +219,9 @@
     "p4_error": "Délai d'attente dépassé pour Gemini lors de la phase de correction.",
     "done_issues": "🚀 <b>Mode Turbo Terminé:</b>\n\n✅ <b>Phase 1:</b> Planification (Claude)\n✅ <b>Phase 2:</b> Codage (Gemini)\n⚠️ <b>Phase 3:</b> Révision (Claude)\n✅ <b>Phase 4:</b> Correction (Gemini)\n\n✨ Résultats à venir...",
     "done_no_issues": "🚀 <b>Mode Turbo Terminé:</b>\n\n✅ <b>Phase 1:</b> Planification (Claude)\n✅ <b>Phase 2:</b> Codage (Gemini)\n✅ <b>Phase 3:</b> Révision - Aucun Problème (Claude)\n\n✨ Résultats à venir...",
-    "error_title": "❌ <b>Erreur du Mode Turbo:</b>\n\n{error}"
+    "error_title": "❌ <b>Erreur du Mode Turbo:</b>\n\n{error}",
+    "p5_summarizing": "⏳ Phase 5 : Préparation du résumé...",
+    "done_summary": "✨ Mode Turbo Terminé (Résumé prêt)",
+    "p5_error": "Délai d'attente dépassé pour la phase de résumé."
   }
 }

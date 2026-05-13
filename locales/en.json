@@ -222,6 +222,9 @@
     "p4_error": "Gemini timed out during the fixing phase.",
     "done_issues": "🚀 <b>Turbo Mode Completed:</b>\n\n✅ <b>Phase 1:</b> Planning (Claude)\n✅ <b>Phase 2:</b> Coding (Gemini)\n⚠️ <b>Phase 3:</b> Review (Claude)\n✅ <b>Phase 4:</b> Fixing (Gemini)\n\n✨ Results incoming...",
     "done_no_issues": "🚀 <b>Turbo Mode Completed:</b>\n\n✅ <b>Phase 1:</b> Planning (Claude)\n✅ <b>Phase 2:</b> Coding (Gemini)\n✅ <b>Phase 3:</b> Review - No Issues (Claude)\n\n✨ Results incoming...",
-    "error_title": "❌ <b>Turbo Mode Error:</b>\n\n{error}"
+    "error_title": "❌ <b>Turbo Mode Error:</b>\n\n{error}",
+    "p5_summarizing": "⏳ Phase 5: Preparing executive summary...",
+    "done_summary": "✨ Turbo Mode Complete (Summary ready)",
+    "p5_error": "Summary phase timed out."
   }
 }
