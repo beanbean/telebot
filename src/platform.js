@@ -333,12 +333,7 @@ function launchIDE(workspace, port = 9333) {
                             } catch (_) {}
                         }
                         if (!verified) {
-                            console.warn('[platform] launchIDE: IPC succeeded but no new window detected — falling back to raw binary');
-                            const fallbackCmd = `nohup "${binary}" --remote-debugging-port=${port} --new-window --disable-workspace-trust "${workspace}" > /dev/null 2>&1 &`;
-                            console.log(`[platform] launchIDE fallback cmd: ${fallbackCmd}`);
-                            exec(fallbackCmd, { env: cleanEnv });
-                            // Wait for the window to appear
-                            await new Promise(r => setTimeout(r, 5000));
+                            console.warn('[platform] launchIDE: IPC succeeded but new window verification timed out or title mismatched. Assuming success.');
                         }
                     }
                     resolve();

@@ -26,3 +26,16 @@ npm-debug.log*
 
 # PM2
 ecosystem.config.js
+
+# MindSync
+v3_integration_plan.md
+.mindsync/
+
+# AI Rules & Local Context
+.cursorrules
+.windsurfrules
+CLAUDE.md
+GEMINI.md
+.gemini/
+.cursor/
+
