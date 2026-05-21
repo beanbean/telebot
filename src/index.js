@@ -1186,12 +1186,8 @@ function doLaunchWorkspace(ctx, workspace) {
             }
             if (cdpReady) {
                 await sendMainMenu(ctx, t('workspace.started'));
-                // Auto-click Trust Workspace dialog if it appears
-                trustWorkspaceViaCDP(CDP_PORT, 10).then(trusted => {
-                    if (trusted) {
-                        ctx.reply(t('workspace.trusted'));
-                    }
-                }).catch(() => {});
+                // trustWorkspaceViaCDP removed — CDP intervention during startup
+                // interrupts Electron's init/sync and prevents state.vscdb from saving
                 
                 // Clear preferred window when workspace changes
                 setPreferredWindow(null);
