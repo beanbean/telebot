@@ -499,9 +499,12 @@ async function getChatHeader(targetId = null, fallback = '') {
     return fallback;
 }
 
-async function buildMainMenu() {
-    let wsName = 'Projects';
-    let threadName = null;
+async function buildMainMenu(overrideThread = null, overrideWorkspace = null) {
+    const preferredApp = process.env.ANTIGRAVITY_PREFERRED_APP || 'agent';
+    const isIDE = preferredApp === 'ide';
+    let wsName = overrideWorkspace || 'Projects';
+    let threadName = overrideThread || null;
+    if (!overrideThread && !overrideWorkspace) {
     try {
         const info = await getActiveThreadInfo(CDP_PORT);
         if (info && info.name) threadName = info.name;
@@ -515,7 +518,7 @@ async function buildMainMenu() {
             wsName = require('path').basename(currentWorkspaceDir);
         }
     }
-
+    } // end if (!overrideThread && !overrideWorkspace)
     let modelName = t('menu.model_not_selected') || 'Model Seçilmedi';
     try {
         const m = await getCurrentModel(CDP_PORT);
@@ -525,13 +528,23 @@ async function buildMainMenu() {
         }
     } catch(e) {}
 
-    // Butonda her zaman aktif ajan/konuşma başlığını göster (workspace değil)
-    // Standalone'da workspace kavramı yok, IDE'de de ajan ismi daha kullanışlı
+    // IDE aktifken: workspace adı göster (ör. "antigravity-bot")
+    // Standalone aktifken: agent/thread adı göster (ör. "Validating Rules...")
     let displayTitle = 'Agent';
-    if (threadName && threadName !== 'Launchpad') {
-        displayTitle = threadName;
-    } else if (wsName && wsName !== 'Projects') {
-        displayTitle = wsName;
+    if (isIDE) {
+        // IDE mode: workspace name is primary
+        if (wsName && wsName !== 'Projects') {
+            displayTitle = wsName;
+        } else if (threadName && threadName !== 'Launchpad') {
+            displayTitle = threadName;
+        }
+    } else {
+        // Standalone mode: thread/agent name is primary
+        if (threadName && threadName !== 'Launchpad') {
+            displayTitle = threadName;
+        } else if (wsName && wsName !== 'Projects') {
+            displayTitle = wsName;
+        }
     }
     // Başlığı max 20 karaktere kısalt
     if (displayTitle.length > 20) displayTitle = displayTitle.substring(0, 18) + '...';
@@ -547,8 +560,8 @@ async function buildMainMenu() {
     ]).resize();
 }
 
-async function sendMainMenu(ctx, text = '🕹️ Kontrol Paneli:') {
-    const kb = await buildMainMenu();
+async function sendMainMenu(ctx, text = '🕹️ Kontrol Paneli:', overrideThread = null, overrideWorkspace = null) {
+    const kb = await buildMainMenu(overrideThread, overrideWorkspace);
     return ctx.reply(text, kb);
 }
 
@@ -703,7 +716,7 @@ bot.command('agents', async (ctx) => {
                 if (thread.workspace) setActiveWorkspace(thread.workspace);
                 // Update lastResolvedThreadId so /latest reads from this thread
                 await snapshotChatState(CDP_PORT, success).catch(() => {});
-                await sendMainMenu(ctx, `✅ Sohbet değiştirildi: ${thread.name}`);
+                await sendMainMenu(ctx, `✅ Sohbet değiştirildi: ${thread.name}`, thread.name, thread.workspace);
             }
         } else {
             ctx.reply(t('agents.invalid_number') || '❌ Invalid thread number.');
@@ -765,7 +778,7 @@ bot.hears(/^\/agents_(\d+)$/, async (ctx) => {
             // Update lastResolvedThreadId so /latest reads from this thread
             await snapshotChatState(CDP_PORT, targetId).catch(() => {});
             // Menüyü yenile — buton yeni ajan ismini göstersin
-            await sendMainMenu(ctx, `✅ Sohbet değiştirildi: ${thread.name}`);
+            await sendMainMenu(ctx, `✅ Sohbet değiştirildi: ${thread.name}`, thread.name, thread.workspace);
         }
     } else {
         ctx.reply(t('agents.invalid_number') || '❌ Invalid thread number.');
