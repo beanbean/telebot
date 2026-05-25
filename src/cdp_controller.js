@@ -455,7 +455,7 @@ async function _domLatestExtraction(port, specificTargetId = null) {
             
             const expr = CHAT_EXTRACT_EXPR.replace(
                 /extractedText\s*=\s*msgs\.join/g,
-                "extractedText = msgs.slice(-2).join"
+                "extractedText = (function(){ let idx = -1; for(let i=msgs.length-1; i>=0; i--) { if(msgs[i].startsWith('👤 User:')) { idx = i; break; } } return idx !== -1 ? msgs.slice(idx) : msgs.slice(-2); })().join"
             );
             
             const res = await Runtime.evaluate({
@@ -1316,7 +1316,8 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
 
     // 2. Fallback: Get Thread ID via file-system logs of the app
     // New IDE uses transcript.jsonl, legacy used overview.txt — check both
-    if (!threadId) {
+    // Only apply global fallback if no specific target is requested!
+    if (!threadId && !specificTargetId) {
         try {
             const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
             const brainPath = path.join(os.homedir(), '.gemini', appDataName, 'brain');
