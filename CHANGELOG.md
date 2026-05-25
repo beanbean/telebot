@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-05-25
+
+### Fixed
+- **macOS Graceful Exit**: Replaced Unix `pkill -15` with `osascript -e 'quit app ...'` for smoother app shutdown and reliable `state.vscdb` persistence on macOS.
+- **macOS Shortcut Support**: The `/fix_shortcuts` command now correctly supports macOS, generating `.app` launchers using `osacompile`.
+- **Latest Command Truncation**: Removed the erroneous fallback to DOM extraction in `/latest` when encountering `<truncated \d+ bytes>`, fixing the issue of empty responses in Antigravity 2.0.
+- **IDE Workspace Button**: Fixed the 🤖 menu button mistakenly triggering the Agents menu in IDE mode; it now correctly triggers the Workspace menu.
+- **Agent QuickPick Selection**: Improved the `/agent` switch command to dispatch `mousedown`/`mouseup` events in the IDE, fixing the issue where it got stuck on the "Select where to open the conversation" popup.
+
 ## [3.1.0] - 2026-05-21
 
 ### Added

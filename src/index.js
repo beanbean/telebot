@@ -1493,6 +1493,40 @@ if (Test-Path $lnkIDE) {
         } catch (e) {
             ctx.reply(t('shortcuts.start_error', { error: e.message }));
         }
+    } else if (platform === 'darwin') {
+        // macOS: osacompile kullanarak masaüstüne başlatıcı .app'ler oluşturur
+        try {
+            const { execSync } = require('child_process');
+            const desktop = path.join(os.homedir(), 'Desktop');
+            let fixedCount = 0;
+            let status = 'Kısayollar güncellendi:\n';
+            
+            // 1. Standalone Agent (Port 9333)
+            const agentBinary = getAppBinary('agent'); // Uygulamanın .app dizinini döndürür
+            if (fs.existsSync(agentBinary)) {
+                const agentAppPath = path.join(desktop, 'Antigravity Agent (CDP).app');
+                // open -a komutuyla uygulamayı debug portu ile başlatacak script
+                const script = `do shell script "open -a \\"${agentBinary}\\" --args --remote-debugging-port=9333"`;
+                execSync(`osacompile -e '${script}' -o "${agentAppPath}"`);
+                status += `• 🤖 <b>Antigravity Agent (CDP).app</b> -> <code>Port 9333</code> ✅\n`;
+                fixedCount++;
+            }
+            
+            // 2. Classic IDE (Port 9334)
+            const ideBinary = getAppBinary('ide');
+            if (fs.existsSync(ideBinary)) {
+                const ideAppPath = path.join(desktop, 'Antigravity IDE (CDP).app');
+                const script = `do shell script "open -a \\"${ideBinary}\\" --args --remote-debugging-port=9334"`;
+                execSync(`osacompile -e '${script}' -o "${ideAppPath}"`);
+                status += `• 💻 <b>Antigravity IDE (CDP).app</b> -> <code>Port 9334</code> ✅\n`;
+                fixedCount++;
+            }
+            
+            status += t('shortcuts.success', { count: fixedCount });
+            ctx.reply(status, { parse_mode: 'HTML' });
+        } catch (e) {
+            ctx.reply(t('shortcuts.start_error', { error: e.message }));
+        }
     } else {
         ctx.reply(t('shortcuts.unsupported_platform') || '\u26a0\ufe0f Bu platform i\u00e7in k\u0131sayol d\u00fczeltme hen\u00fcz desteklenmiyor.');
     }
@@ -1949,6 +1983,15 @@ bot.command('panel', async (ctx) => {
 });
 
 bot.hears(/^🤖/i, async (ctx) => {
+    const preferredApp = process.env.ANTIGRAVITY_PREFERRED_APP || 'agent';
+    const isIDE = preferredApp === 'ide';
+    
+    if (isIDE) {
+        // ide modunda bu buton workspace adını gösteriyor, bu yüzden workspace menüsünü aç
+        ctx.message.text = '/workspace';
+        return handleWorkspace(ctx);
+    }
+    
     // 🤖 butonu aktif ajanı gösteriyor — tıklanınca /agents listesini tetikle
     try {
         const workspaces = await listAgentThreads(CDP_PORT);

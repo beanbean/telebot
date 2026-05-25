@@ -527,17 +527,11 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                 }
                 
                 if (lastModelMsg) {
-                    if (lastModelMsg.match(/<truncated \d+ bytes>$/)) {
-                        console.log('[getFullLatestResponse] File-system message is truncated by logger, falling back to DOM');
-                    } else {
-                        const parts = [];
-                        if (lastUserMsg) parts.push('👤 User:\n' + lastUserMsg);
-                        // Truncate very long model responses for Telegram
-                        const truncated = lastModelMsg.length > 3000 ? lastModelMsg.substring(0, 3000) + '\n\n[...truncated]' : lastModelMsg;
-                        parts.push('🤖 Agent:\n' + truncated);
-                        console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)}`);
-                        return parts.join('\n\n');
-                    }
+                    const parts = [];
+                    if (lastUserMsg) parts.push('👤 User:\n' + lastUserMsg);
+                    parts.push('🤖 Agent:\n' + lastModelMsg);
+                    console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)}`);
+                    return parts.join('\n\n');
                 }
             }
         }
@@ -1170,13 +1164,19 @@ async function switchAgentThread(port, threadName) {
                                 const text = (el.textContent || '').toLowerCase();
                                 return text.includes('open in workspace') || text.includes('workspace:');
                             });
-                            if (wsOption) { wsOption.click(); return true; }
-                            // If no workspace option, try "Open in current window"
                             const currentOption = items.find(el => {
                                 const text = (el.textContent || '').toLowerCase();
                                 return text.includes('open in current window') || text.includes('current window');
                             });
-                            if (currentOption) { currentOption.click(); return true; }
+                            
+                            const targetOption = wsOption || currentOption;
+                            if (targetOption) {
+                                targetOption.scrollIntoView();
+                                targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                                targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                                targetOption.click();
+                                return true;
+                            }
                             return false;
                         })()`
                     });

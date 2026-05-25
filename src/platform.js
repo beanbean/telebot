@@ -221,8 +221,8 @@ function killIDE(app = getPreferredApp()) {
                 cmd = `taskkill /IM "${procName}" 2>nul & timeout /t 3 /nobreak >nul & taskkill /F /IM "${procName}" 2>nul & timeout /t 1 /nobreak >nul`;
                 break;
             case 'darwin':
-                // SIGTERM (15) first to allow Electron to save databases gracefully, then SIGKILL (9) fallback
-                cmd = `pkill -15 -f "${binary}" 2>/dev/null; pkill -15 -f "antigravity-launcher" 2>/dev/null; sleep 3; pkill -9 -f "${binary}" 2>/dev/null; pkill -9 -f "antigravity-launcher" 2>/dev/null; sleep 1`;
+                // macOS Native quit triggers the graceful shutdown and state saving perfectly
+                cmd = `osascript -e 'quit app "${procName}"'`;
                 break;
             default: // linux
                 // Kill ALL app-related processes including child processes
