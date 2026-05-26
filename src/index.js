@@ -2286,9 +2286,14 @@ async function init() {
         console.error(`[Bot Error] for ${ctx.updateType}:`, err.message || err);
     });
 
-    bot.launch({ dropPendingUpdates: true }).catch(err => {
-        console.error("Bot launch failed:", err);
-    });
+    const launchBot = () => {
+        bot.launch({ dropPendingUpdates: true }).catch(err => {
+            console.error("Bot launch failed:", err.message || err);
+            console.log("Retrying in 30 seconds...");
+            setTimeout(launchBot, 30000);
+        });
+    };
+    launchBot();
 
     // Push the main menu keyboard to the user so it's active by default (wait 3s to let IDE/CDP initialize)
     setTimeout(() => {
