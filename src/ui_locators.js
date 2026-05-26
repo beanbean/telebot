@@ -167,18 +167,34 @@ const UI_LOCATORS_SCRIPT = `
                 if (btn) return btn;
             }
             
+            const iconSelectors = 'svg.lucide-plus, svg.lucide-square-pen, svg.lucide-message-square-plus';
+            const icon = document.querySelector(iconSelectors);
+            if (icon) {
+                const btn = icon.closest('button, a, [role="button"]');
+                if (btn) return btn;
+            }
+            
             // Universal label query for new conversation trigger
             const selectors = [
                 '[aria-label*="New Chat" i]',
                 '[title*="New Chat" i]',
                 '[aria-label*="Yeni Sohbet" i]',
                 '[title*="Yeni Sohbet" i]',
+                '[aria-label*="New Conversation" i]',
+                '[title*="New Conversation" i]',
                 '[class*="new-chat"]',
                 '[aria-label*="New Task" i]',
                 '[title*="New Task" i]',
                 '[data-tooltip-id*="new-conversation" i]'
             ];
-            return document.querySelector(selectors.join(', ')) || null;
+            let btn = document.querySelector(selectors.join(', '));
+            if (btn) return btn;
+            
+            const allBtns = Array.from(document.querySelectorAll('button, a, [role="button"]'));
+            return allBtns.find(b => {
+                const text = (b.textContent || '').trim().toLowerCase();
+                return text === 'new chat' || text === 'new conversation' || text === 'yeni sohbet';
+            }) || null;
         },
 
         /**
