@@ -577,9 +577,12 @@ bot.command('start', async (ctx) => {
 
 const handleLatest = async (ctx) => {
     try {
-        let text = await getFullLatestResponse(CDP_PORT);
+        let _latestRes = await getFullLatestResponse(CDP_PORT);
+        let text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+        let buttons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+        
         const header = await getChatHeader(null, t('latest.title'));
-        await sendLongMessage(ctx, text, header);
+        await sendLongMessage(ctx, text, header, buttons);
     } catch (err) {
         ctx.reply(t('latest.error', { error: err.message }));
     }
@@ -632,11 +635,14 @@ bot.command('ask', (ctx) => {
             
             const isDone = await waitForAgentResponse(CDP_PORT, 450000, createProgressHandler(ctx));
             if (isDone) {
-                let text = await getFullLatestResponse(CDP_PORT);
+                let _latestRes = await getFullLatestResponse(CDP_PORT);
+                let text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+                let buttons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+                
                 text = stripQueryFromResponse(text, query);
                 if (!text) text = t('ask.done_empty');
                 const header = await getChatHeader(null, t('ask.done'));
-                await sendLongMessage(ctx, text, header);
+                await sendLongMessage(ctx, text, header, buttons);
             } else {
                 await ctx.reply(t('ask.timeout'));
             }
@@ -1604,10 +1610,13 @@ bot.action(/wn_(.+)/, (ctx) => {
     (async () => {
         try {
             await new Promise(r => setTimeout(r, 800));
-            let text = await getFullLatestResponse(CDP_PORT);
+            let _latestRes = await getFullLatestResponse(CDP_PORT);
+            let text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+            let buttons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+            
             if (text && !text.startsWith('[No previous')) {
                 const header = await getChatHeader(null, '📋 Son Agent Yanıtı:');
-                await sendLongMessage(ctx, text, header);
+                await sendLongMessage(ctx, text, header, buttons);
             }
         } catch(_) {}
     })();
@@ -2055,6 +2064,56 @@ function extractQuotedContext(ctx) {
     return quotedText ? `[Replying to Agent's message: "${quotedText}"]\n\n` : "";
 }
 
+
+// ===== INTERACTIVE MODAL ANSWER HANDLER =====
+bot.action(/^ans_(.+)$/, async (ctx) => {
+    const answer = ctx.match[1];
+    await ctx.answerCbQuery(`Seçiminiz iletildi: ${answer}`);
+    
+    let targetId = getPreferredTargetId();
+    let explicitThreadName = null;
+    if (ctx.callbackQuery.message) {
+        const val = messageTargetMap.get(ctx.callbackQuery.message.message_id);
+        if (typeof val === 'string') targetId = val;
+        else if (val) { targetId = val.targetId; explicitThreadName = val.threadName; }
+    }
+    
+    try {
+        if (explicitThreadName) await switchAgentThread(CDP_PORT, explicitThreadName).catch(()=>{});
+        await ctx.reply(t('ask.sent') + ` [${answer}]`);
+        targetId = await sendViaCDP(answer, CDP_PORT, targetId);
+        
+        await new Promise(r => setTimeout(r, 1500));
+        await snapshotChatState(CDP_PORT, targetId).catch(() => {});
+
+        const isDone = await waitForAgentResponse(CDP_PORT, 450000, createProgressHandler(ctx), targetId);
+        let text = "";
+        let interactiveButtons = null;
+        if (isDone) {
+            let _latestRes = await getFullLatestResponse(CDP_PORT, targetId, explicitThreadName);
+            text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+            interactiveButtons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+            text = stripQueryFromResponse(text, answer);
+        } else {
+            return await ctx.reply(t('ask.timeout'));
+        }
+        
+        if (!text) text = t('ask.done_empty');
+        const header = await getChatHeader(targetId, t('ask.done'));
+        const buttons = interactiveButtons ? interactiveButtons : await buildMainMenu(null, null, targetId);
+
+        const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.callbackQuery.message.message_id);
+        if (sentIds && sentIds.length > 0 && targetId) {
+            const activeInfo = await getActiveThreadInfo(CDP_PORT, targetId).catch(() => null);
+            const currentThreadName = activeInfo ? activeInfo.name : null;
+            sentIds.forEach(id => messageTargetMap.set(id, { targetId, threadName: currentThreadName }));
+            saveMessageTargetMap(messageTargetMap);
+        }
+    } catch (e) {
+        ctx.reply('Error: ' + e.message).catch(()=>{});
+    }
+});
+
 bot.on('text', (ctx) => {
     if (ctx.message.text.startsWith('/')) return;
     let query = ctx.message.text;
@@ -2077,6 +2136,7 @@ bot.on('text', (ctx) => {
             if (explicitThreadName) await switchAgentThread(CDP_PORT, explicitThreadName).catch(()=>{});
             let targetId = explicitTargetId;
             let text = "";
+            let interactiveButtons = null;
 
             if (isTurboMode) {
                 const turboTargetId = explicitTargetId || getPreferredTargetId() || null;
@@ -2092,7 +2152,10 @@ bot.on('text', (ctx) => {
                 
                 const isDone = await waitForAgentResponse(CDP_PORT, 450000, createProgressHandler(ctx), targetId);
                 if (isDone) {
-                    text = await getFullLatestResponse(CDP_PORT, targetId, explicitThreadName);
+                    let _latestRes = await getFullLatestResponse(CDP_PORT, targetId, explicitThreadName);
+                    text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+                    interactiveButtons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+                    
                     text = stripQueryFromResponse(text, query);
                 } else {
                     return await ctx.reply(t('ask.timeout'));
@@ -2101,7 +2164,7 @@ bot.on('text', (ctx) => {
 
             if (!text) text = t('ask.done_empty');
             const header = await getChatHeader(targetId, t('ask.done'));
-            const buttons = await buildMainMenu(null, null, targetId);
+            const buttons = interactiveButtons ? interactiveButtons : await buildMainMenu(null, null, targetId);
             
             const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.message.message_id);
             if (sentIds && sentIds.length > 0 && targetId) {
@@ -2132,7 +2195,10 @@ async function processAgentRequest(ctx, query, explicitTargetId, explicitThreadN
     
     const isDone = await waitForAgentResponse(CDP_PORT, 450000, createProgressHandler(ctx), targetId);
     if (isDone) {
-        let text = await getFullLatestResponse(CDP_PORT, targetId);
+        let _latestRes = await getFullLatestResponse(CDP_PORT, targetId);
+        let text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+        let interactiveButtons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+        
         text = stripQueryFromResponse(text, query);
         if (originalCaption) {
             text = stripQueryFromResponse(text, originalCaption);
@@ -2140,7 +2206,7 @@ async function processAgentRequest(ctx, query, explicitTargetId, explicitThreadN
         if (!text) text = t('ask.done_empty');
         const header = await getChatHeader(targetId, t('ask.done'));
         
-        const buttons = await buildMainMenu(null, null, targetId);
+        const buttons = interactiveButtons ? interactiveButtons : await buildMainMenu(null, null, targetId);
         
         const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.message.message_id);
         if (sentIds && sentIds.length > 0 && targetId) {

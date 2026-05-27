@@ -472,8 +472,67 @@ async function _domLatestExtraction(port, specificTargetId = null) {
     return null;
 }
 
+async function getInteractiveModalState(port, specificTargetId = null) {
+    let candidates = await resolveTargets(port);
+    if (specificTargetId) candidates = candidates.filter(t => t.id === specificTargetId);
+    
+    for (const target of candidates) {
+        try {
+            const client = await CDP({ target: target.webSocketDebuggerUrl });
+            const { Runtime } = client;
+            await Runtime.enable();
+            const res = await Runtime.evaluate({
+                expression: `(() => {
+                    const isModal = !!document.querySelector('textarea[placeholder*="Other"], textarea[placeholder*="answer"], .flex.flex-col.gap-2.border-t button');
+                    if (!isModal) return null;
+                    
+                    const container = document.querySelector('.antigravity-agent-side-panel, .modal, [role="dialog"], .interactive-session') || document;
+                    const headerEl = container.querySelector('h2, h3.font-medium, .modal-header');
+                    const header = (headerEl && headerEl.textContent.trim()) || 'Ajan Onay / Soru Bekliyor:';
+                    
+                    const labels = Array.from(container.querySelectorAll('label'));
+                    const options = labels.map(l => (l.innerText || l.textContent).trim().replace(/^\\d+\\s*\\n?/, '')).filter(t => t && !t.match(/^(Other|Other \\(write your answer\\)|\\d+)$/i));
+                    
+                    return { header, options };
+                })()`,
+                returnByValue: true
+            });
+            await client.close();
+            
+            if (res.result?.value) {
+                return res.result.value;
+            }
+        } catch (e) {}
+    }
+    return null;
+}
+
 async function getFullLatestResponse(port, specificTargetId = null, threadName = null) {
     const targetIdToUse = specificTargetId || preferredTargetId;
+    
+    let modalText = "";
+    let modalButtons = null;
+    try {
+        const modalState = await getInteractiveModalState(port, targetIdToUse);
+        if (modalState) {
+            modalText = `\n\n⚠️ **${modalState.header}**\n`;
+            if (modalState.options && modalState.options.length > 0) {
+                modalText += `\n_(Aşağıdaki butonlardan birini seçebilir veya yazabilirsiniz)_`;
+                modalButtons = {
+                    reply_markup: {
+                        inline_keyboard: modalState.options.map((opt, i) => ([{ text: `${i + 1}️⃣ ${opt}`, callback_data: `ans_${i + 1}` }]))
+                    }
+                };
+            } else {
+                modalText += `\n_(Lütfen onaylamak için 'onayla' veya iptal etmek için 'reddet' butonunu kullanın)_`;
+                modalButtons = {
+                    reply_markup: {
+                        inline_keyboard: [ [{ text: 'Onayla', callback_data: 'ans_Onayla' }, { text: 'Reddet', callback_data: 'ans_Reddet' }] ]
+                    }
+                };
+            }
+        }
+    } catch(e) {}
     
     // --- Primary: file-system extraction from the active thread's log ---
     try {
@@ -532,19 +591,23 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                     if (lastUserMsg) parts.push('👤 User:\n' + lastUserMsg);
                     parts.push('🤖 Agent:\n' + modelMsgs.join('\n\n'));
                     console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)}`);
-                    return parts.join('\n\n');
+                    return { text: parts.join('\n\n') + modalText, buttons: modalButtons };
+                } else if (modalText) {
+                    return { text: modalText.trim(), buttons: modalButtons };
                 }
             }
         }
     } catch (e) {
         console.log('[getFullLatestResponse] File-system extraction failed:', e.message);
     }
-    
+
     // --- Fallback: DOM extraction (when no preferred window or file-system failed) ---
     const domResult = await _domLatestExtraction(port, targetIdToUse);
-    if (domResult) return domResult;
+    if (domResult) return { text: domResult + modalText, buttons: modalButtons };
     
-    return "[No previous message stored yet. Run a prompt first.]";
+    if (modalText) return { text: modalText.trim(), buttons: modalButtons };
+
+    return { text: "[No previous message stored yet. Run a prompt first.]", buttons: null };
 }
 
 async function captureAgentScreenshot(port) {
@@ -781,7 +844,15 @@ async function sendViaCDP(text, port, specificTargetId = null) {
 
                             // Find the submit button near the editor (within same panel)
                             const panelContainer = editor.closest('#antigravity') || editor.closest('#conversation') || document;
-                            const submit = panelContainer.querySelector("svg.lucide-arrow-right, svg.lucide-arrow-up, svg[class*='arrow-right'], svg[class*='arrow-up'], svg[class*='send']")?.closest("button");
+                            let submit = panelContainer.querySelector("svg.lucide-arrow-right, svg.lucide-arrow-up, svg[class*='arrow-right'], svg[class*='arrow-up'], svg[class*='send']")?.closest("button");
+                            if (!submit) {
+                                const allBtns = Array.from(panelContainer.querySelectorAll('button')).filter(b => b.offsetParent !== null);
+                                submit = allBtns.find(b => {
+                                    const text = (b.textContent || '').trim().toLowerCase();
+                                    return text === 'submit' || text.startsWith('submit') || text === 'gönder' || text === 'approve' || text === 'allow';
+                                });
+                            }
+                            
                             if (submit && !submit.disabled) {
                                 setTimeout(() => submit.click(), 10);
                                 return { found: true, method: 'button', target: '${target.title?.substring(0, 30) || 'unknown'}' };

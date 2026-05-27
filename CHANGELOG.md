@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-05-28
+
+### Added
+- **Interactive Modals via Inline Keyboards**: The IDE agent's interactive components (like multiple-choice questions or permission requests) are now fully bridged to Telegram natively. The user receives these choices as embedded Inline Keyboard buttons beneath the message, and responses are seamlessly forwarded back to the agent without disrupting the normal conversation flow or main menu.
+
+### Changed
+- **Bot Response Formatting**: Interactive questions no longer rely on clunky 'Reply Keyboards' and instead use modern inline buttons with the full text of the option embedded directly on the button.
+
 ## [3.1.1] - 2026-05-25
 
 ### Fixed
