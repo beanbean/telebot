@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-05-28
+
+### Fixed
+- **Launcher Shortcuts**: Fixed a critical bug in the Linux desktop launcher scripts (`antigravity-ide-launcher.sh` and `antigravity-standalone-launcher.sh`) where opening a new window would aggressively kill existing IDE/Agent processes and the Telegram bot, causing ungraceful exits and chat history loss.
+- **Fix Shortcuts Command**: Updated the internal template of the `/fix_shortcuts` bot command to generate the new, safe launcher scripts.
+  > ⚠️ **IMPORTANT**: If you have previously used the `/fix_shortcuts` command, please run it again. An important bug has been discovered in the previously generated scripts.
 ## [3.2.0] - 2026-05-28
 
 ### Added
