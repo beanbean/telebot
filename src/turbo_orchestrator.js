@@ -41,7 +41,8 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         let isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId);
         if (!isDone) throw new Error(t('turbo.p1_error') || "Claude planlama aşamasında zaman aşımına uğradı.");
 
-        let planText = await getFullLatestResponse(CDP_PORT, sentTargetId);
+        let _planTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId);
+        let planText = typeof _planTextRaw === 'string' ? _planTextRaw : _planTextRaw.text;
         planText = stripQueryFromResponse(planText, pmPrompt);
 
         // Update Telegram Status
@@ -70,7 +71,8 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId2);
         if (!isDone) throw new Error(t('turbo.p2_error') || "Gemini kodlama aşamasında zaman aşımına uğradı.");
 
-        let codeText = await getFullLatestResponse(CDP_PORT, sentTargetId2);
+        let _codeTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId2);
+        let codeText = typeof _codeTextRaw === 'string' ? _codeTextRaw : _codeTextRaw.text;
         codeText = stripQueryFromResponse(codeText, coderPrompt);
 
         // --- PHASE 3: REVIEW (Claude) ---
@@ -98,7 +100,8 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId3);
         if (!isDone) throw new Error(t('turbo.p3_error') || "Claude inceleme aşamasında zaman aşımına uğradı.");
 
-        let reviewText = await getFullLatestResponse(CDP_PORT, sentTargetId3);
+        let _reviewTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId3);
+        let reviewText = typeof _reviewTextRaw === 'string' ? _reviewTextRaw : _reviewTextRaw.text;
         reviewText = stripQueryFromResponse(reviewText, reviewPrompt);
         
         let fixText = "N/A";
@@ -131,7 +134,8 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
             isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId4);
             if (!isDone) throw new Error(t('turbo.p4_error') || "Gemini düzeltme aşamasında zaman aşımına uğradı.");
 
-            fixText = await getFullLatestResponse(CDP_PORT, sentTargetId4);
+            let _fixTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId4);
+            fixText = typeof _fixTextRaw === 'string' ? _fixTextRaw : _fixTextRaw.text;
             fixText = stripQueryFromResponse(fixText, fixPrompt);
 
         }
@@ -183,7 +187,8 @@ Keep it concise (max 10 lines). Use emoji for readability.`;
         isDone = await waitForAgentResponse(CDP_PORT, 300000, createProgressHandler(ctx), sentTargetId5);
         if (!isDone) throw new Error(t('turbo.p5_error') || "Özet aşamasında zaman aşımına uğradı.");
 
-            let summaryText = await getFullLatestResponse(CDP_PORT, sentTargetId5);
+            let _summaryTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId5);
+            let summaryText = typeof _summaryTextRaw === 'string' ? _summaryTextRaw : _summaryTextRaw.text;
             summaryText = stripQueryFromResponse(summaryText, summaryPrompt);
 
             await ctx.telegram.editMessageText(

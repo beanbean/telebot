@@ -587,11 +587,8 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                 }
                 
                 if (modelMsgs.length > 0) {
-                    const parts = [];
-                    if (lastUserMsg) parts.push('👤 User:\n' + lastUserMsg);
-                    parts.push('🤖 Agent:\n' + modelMsgs.join('\n\n'));
                     console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)}`);
-                    return { text: parts.join('\n\n') + modalText, buttons: modalButtons };
+                    return { text: modelMsgs.join('\n\n') + modalText, buttons: modalButtons };
                 } else if (modalText) {
                     return { text: modalText.trim(), buttons: modalButtons };
                 }

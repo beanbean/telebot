@@ -321,7 +321,6 @@ async function cleanupAll() {
 
 bot.command('restart', async (ctx) => {
     await ctx.reply(t('restart.closing'));
-    await cleanupAll();
     process.exit(0);
 });
 
