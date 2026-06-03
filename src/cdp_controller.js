@@ -45,39 +45,51 @@ function findConversationIdByTitle(threadName) {
 
         const dirs = fs.readdirSync(brainPath, { withFileTypes: true });
         
-        // Sort by mtime to search recent threads first
+        // Sort by mtime to search recent threads first — check BOTH overview.txt AND transcript.jsonl
         const sortedDirs = dirs
             .filter(d => d.isDirectory())
             .map(d => {
-                const p = path.join(brainPath, d.name, '.system_generated', 'logs', 'overview.txt');
-                const mtime = fs.existsSync(p) ? fs.statSync(p).mtimeMs : 0;
-                return { name: d.name, path: p, mtime };
+                const overviewPath = path.join(brainPath, d.name, '.system_generated', 'logs', 'overview.txt');
+                const transcriptPath = path.join(brainPath, d.name, '.system_generated', 'logs', 'transcript.jsonl');
+                let mtime = 0;
+                let logPath = null;
+                try { if (fs.existsSync(transcriptPath)) { mtime = fs.statSync(transcriptPath).mtimeMs; logPath = transcriptPath; } } catch (_) {}
+                if (!logPath) { try { if (fs.existsSync(overviewPath)) { mtime = fs.statSync(overviewPath).mtimeMs; logPath = overviewPath; } } catch (_) {} }
+                return { name: d.name, logPath, mtime };
             })
             .sort((a, b) => b.mtime - a.mtime);
 
+        const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ').trim();
+        const searchName = normalize(threadName);
+        // For short search names, require stricter match
+        const minMatchLen = Math.min(15, searchName.length);
+
         for (const dir of sortedDirs) {
-            if (dir.mtime === 0) continue;
+            if (!dir.logPath) continue;
             
-            // Read first chunk of file (enough to get the first USER_EXPLICIT block)
-            const fd = fs.openSync(dir.path, 'r');
-            const buffer = Buffer.alloc(4096);
-            const bytesRead = fs.readSync(fd, buffer, 0, 4096, 0);
-            fs.closeSync(fd);
-            
-            const content = buffer.toString('utf8', 0, bytesRead);
-            const lines = content.split('\n');
-            
-            for (const line of lines) {
-                if (line.includes('"source":"USER_EXPLICIT"')) {
+            try {
+                // Read first chunk of file (enough to get conversation title and first user message)
+                const fd = fs.openSync(dir.logPath, 'r');
+                const buffer = Buffer.alloc(6000);
+                const bytesRead = fs.readSync(fd, buffer, 0, 6000, 0);
+                fs.closeSync(fd);
+                
+                const content = buffer.toString('utf8', 0, bytesRead);
+                const lines = content.split('\n');
+                
+                for (const line of lines) {
+                    if (!line.includes('"source":"USER_EXPLICIT"')) continue;
                     try {
                         const entry = JSON.parse(line);
-                        const match = entry.content.match(/<USER_REQUEST>\\n?([\\s\\S]*?)\\n?<\/USER_REQUEST>/);
+                        const match = entry.content.match(/<USER_REQUEST>\n?([\s\S]*?)\n?<\/USER_REQUEST>/);
                         if (match) {
-                            let title = match[1].trim();
-                            if (title.length > 50) title = title.substring(0, 50);
+                            let firstMsg = normalize(match[1]);
+                            if (firstMsg.length > 80) firstMsg = firstMsg.substring(0, 80);
                             
-                            // Loose check since title might be truncated or normalized
-                            if (title.startsWith(threadName.substring(0, 20)) || threadName.startsWith(title.substring(0, 20))) {
+                            // Check if thread title matches first user message
+                            // IDE generates titles from the first message, so they overlap
+                            if (firstMsg.includes(searchName.substring(0, minMatchLen)) || 
+                                searchName.includes(firstMsg.substring(0, minMatchLen))) {
                                 threadNameToIdCache.set(threadName, dir.name);
                                 return dir.name;
                             }
@@ -85,7 +97,7 @@ function findConversationIdByTitle(threadName) {
                     } catch (e) {}
                     break; // Only check the first USER_EXPLICIT
                 }
-            }
+            } catch (e) {}
         }
     } catch (e) {
         console.debug('[findConversationIdByTitle] Error:', e.message);
@@ -380,7 +392,90 @@ function httpGet(url, timeoutMs = 5000) {
  * Snapshot the current chat state for diff tracking.
  * DOM fallback uses globalLastChatState.
  */
-async function snapshotChatState(port, specificTargetId = null) {
+async function snapshotChatState(port, specificTargetId = null, threadName = null) {
+    // Strategy 1: If we have a thread name, resolve directly via filesystem
+    // This is the most reliable path — used after /agents_N thread switching
+    if (threadName) {
+        const resolvedId = findConversationIdByTitle(threadName);
+        if (resolvedId) {
+            const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
+            const logsDir = path.join(os.homedir(), '.gemini', appDataName, 'brain', resolvedId, '.system_generated', 'logs');
+            const hasLogs = fs.existsSync(path.join(logsDir, 'overview.txt')) || fs.existsSync(path.join(logsDir, 'transcript.jsonl'));
+            if (hasLogs) {
+                lastResolvedThreadId = resolvedId;
+                console.log(`[snapshot] Anchored via threadName "${threadName}" → ${resolvedId}`);
+                return;
+            }
+        }
+        console.log(`[snapshot] threadName "${threadName}" could not be resolved via findConversationIdByTitle — trying DOM snippet`);
+    }
+    
+    // Strategy 1.5: Extract a unique content snippet from the IDE's active chat DOM,
+    // then search brain transcripts for that snippet. This works because the actual
+    // response text is unique per conversation, unlike titles which are AI-generated.
+    if (threadName && specificTargetId) {
+        try {
+            const candidates = await resolveTargets(port, false);
+            const target = candidates.find(c => c.id === specificTargetId) || candidates[0];
+            if (target) {
+                const client = await withTimeout(CDP({ target: target.webSocketDebuggerUrl }), 3000, "CDP timeout");
+                const { Runtime } = client;
+                await Runtime.enable();
+                const snippetRes = await withTimeout(Runtime.evaluate({
+                    expression: `(function() {
+                        // Get a unique snippet from the last model response in chat
+                        var blocks = document.querySelectorAll('.markdown-container, .message-content, [data-message-author="model"], .relative.flex.flex-col.gap-y-3 > div');
+                        if (blocks.length === 0) return null;
+                        var lastBlock = blocks[blocks.length - 1];
+                        var text = (lastBlock.textContent || '').trim();
+                        // Get a 60-char snippet from the middle (avoids headers/boilerplate)
+                        if (text.length > 120) {
+                            var mid = Math.floor(text.length / 2);
+                            return text.substring(mid - 30, mid + 30).trim();
+                        }
+                        return text.length > 20 ? text.substring(0, 60).trim() : null;
+                    })()`,
+                    returnByValue: true
+                }), 3000, "Snippet extract timeout");
+                await client.close();
+                
+                const snippet = snippetRes.result?.value;
+                if (snippet && snippet.length > 15) {
+                    const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
+                    const brainPath = path.join(os.homedir(), '.gemini', appDataName, 'brain');
+                    if (fs.existsSync(brainPath)) {
+                        const dirs = fs.readdirSync(brainPath, { withFileTypes: true });
+                        for (const dir of dirs) {
+                            if (!dir.isDirectory()) continue;
+                            const tp = path.join(brainPath, dir.name, '.system_generated', 'logs', 'transcript.jsonl');
+                            if (!fs.existsSync(tp)) continue;
+                            try {
+                                // Read last 30KB of file (where the most recent responses are)
+                                const stats = fs.statSync(tp);
+                                const readSize = Math.min(30000, stats.size);
+                                const fd = fs.openSync(tp, 'r');
+                                const buffer = Buffer.alloc(readSize);
+                                fs.readSync(fd, buffer, 0, readSize, Math.max(0, stats.size - readSize));
+                                fs.closeSync(fd);
+                                const tail = buffer.toString('utf8');
+                                if (tail.includes(snippet)) {
+                                    lastResolvedThreadId = dir.name;
+                                    threadNameToIdCache.set(threadName, dir.name);
+                                    console.log(`[snapshot] Anchored via DOM snippet match → ${dir.name}`);
+                                    return;
+                                }
+                            } catch (_) {}
+                        }
+                    }
+                    console.log(`[snapshot] DOM snippet "${snippet.substring(0, 30)}..." did not match any transcript`);
+                }
+            }
+        } catch (e) {
+            console.log(`[snapshot] DOM snippet strategy failed: ${e.message}`);
+        }
+    }
+    
+    // Strategy 2: Use CDP to detect the active thread from IDE DOM
     try {
         const activeId = await getActiveThreadId(port, specificTargetId || preferredTargetId);
         if (!activeId) return;
@@ -398,12 +493,12 @@ async function snapshotChatState(port, specificTargetId = null) {
         console.log('[snapshot] File-based snapshot failed:', e.message);
     }
     
-    // DOM fallback for legacy behavior
-    let candidates = await resolveTargets(port);
+    // Strategy 3: DOM fallback for legacy behavior
+    let candidates2 = await resolveTargets(port);
     if (specificTargetId) {
-        candidates = candidates.filter(t => t.id === specificTargetId);
+        candidates2 = candidates2.filter(t => t.id === specificTargetId);
     }
-    for (const target of candidates) {
+    for (const target of candidates2) {
         try {
             const client = await CDP({ target: target.webSocketDebuggerUrl });
             const { Runtime } = client;

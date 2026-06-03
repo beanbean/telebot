@@ -809,7 +809,7 @@ bot.hears(/^\/agents_(\d+)$/, async (ctx) => {
                 setActiveWorkspace(thread.workspace);
             }
             // Update lastResolvedThreadId so /latest reads from this thread
-            await snapshotChatState(CDP_PORT, targetId).catch(() => {});
+            await snapshotChatState(CDP_PORT, targetId, thread.name).catch(() => {});
             // Menüyü yenile — buton yeni ajan ismini göstersin
             await sendMainMenu(ctx, t('agents.switched_plain', { name: thread.name }), thread.name, thread.workspace);
         }
