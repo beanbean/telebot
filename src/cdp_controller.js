@@ -661,120 +661,51 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
         }
     } catch(e) {}
     
-    // --- Primary: file-system extraction from the active thread's log ---
+    // === PRIMARY: DOM extraction — always reads from the active/visible thread ===
+    // This is the most reliable approach because the IDE DOM always shows the
+    // currently selected thread, regardless of filesystem state or thread IDs.
     try {
-        let targetWorkspaceName = null;
-        if (targetIdToUse) {
-            const candidates = await resolveTargets(port, false);
-            const tgt = candidates.find(c => c.id === targetIdToUse);
-            if (tgt && tgt.title) {
-                targetWorkspaceName = tgt.title.split(' - ')[0].trim();
-            }
+        const domResult = await _domLatestExtraction(port, targetIdToUse);
+        if (domResult && domResult.trim().length > 10) {
+            console.log(`[getFullLatestResponse] ✓ DOM extraction successful (${domResult.length} chars) | Target: ${targetIdToUse || 'auto'}`);
+            return { text: domResult + modalText, buttons: modalButtons };
         }
+    } catch (e) {
+        console.log(`[getFullLatestResponse] DOM extraction failed: ${e.message}`);
+    }
+    
+    // === FALLBACK: file-system extraction (when DOM is empty or unavailable) ===
+    // Used when: IDE window is minimized, chat panel is hidden, or DOM extraction
+    // returns empty content. Uses lastResolvedThreadId from snapshotChatState.
+    try {
+        let activeId = lastResolvedThreadId;
         
-        // Priority: explicit threadName > last snapshot (most reliable) > dynamic resolution
-        let activeId = findConversationIdByTitle(threadName) || (targetIdToUse ? null : lastResolvedThreadId) || await getActiveThreadId(port, targetIdToUse);
-        
-        // === STRICT WORKSPACE VALIDATION ===
-        // If we resolved an activeId and we know the target workspace, verify
-        // that the resolved thread actually belongs to that workspace.
-        // This prevents returning a stale response from a different workspace.
-        if (activeId && targetWorkspaceName && !threadName) {
-            const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
-            const checkTranscript = path.join(os.homedir(), '.gemini', appDataName, 'brain', activeId, '.system_generated', 'logs', 'transcript.jsonl');
-            if (fs.existsSync(checkTranscript)) {
-                try {
-                    const head = fs.readFileSync(checkTranscript, 'utf8').substring(0, 8000);
-                    // Extract the workspace URI from the transcript metadata
-                    const wsMatch = head.match(/\/([^/\\\s"]+)\s*\n/); // folder name from path in content
-                    const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ');
-                    const normalizedTarget = normalize(targetWorkspaceName);
-                    // Check if the transcript content mentions this workspace
-                    const normalizedHead = normalize(head);
-                    if (!normalizedHead.includes(normalizedTarget)) {
-                        console.log(`[getFullLatestResponse] Thread ${activeId.substring(0, 8)} does NOT belong to workspace "${targetWorkspaceName}" — discarding`);
-                        activeId = null;
-                    }
-                } catch (_) {}
-            }
-        }
-        
-        // If no activeId was found from the DOM/snapshot, try a workspace-filtered global fallback
-        // BUT only if we have a lastResolvedThreadId or explicit threadName — i.e., the user
-        // has previously interacted with a chat. Without that, a fresh workspace switch
-        // should show "no chat history" instead of grabbing a random conversation.
-        if (!activeId && targetWorkspaceName && (lastResolvedThreadId || threadName)) {
-            const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
-            const brainPath = path.join(os.homedir(), '.gemini', appDataName, 'brain');
-            if (fs.existsSync(brainPath)) {
-                const dirs = fs.readdirSync(brainPath, { withFileTypes: true });
-                let latestTime = 0;
-                const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ');
-                const normalizedTarget = normalize(targetWorkspaceName);
-                for (const dir of dirs) {
-                    if (!dir.isDirectory()) continue;
-                    const logsDir = path.join(brainPath, dir.name, '.system_generated', 'logs');
-                    const transcriptPath = path.join(logsDir, 'transcript.jsonl');
-                    if (fs.existsSync(transcriptPath)) {
-                        try {
-                            const stats = fs.statSync(transcriptPath);
-                            if (stats.mtimeMs > latestTime) {
-                                const head = fs.readFileSync(transcriptPath, 'utf8').substring(0, 8000);
-                                const normalizedHead = normalize(head);
-                                // Strict match: workspace folder name must appear in the transcript
-                                if (normalizedHead.includes(normalizedTarget)) {
-                                    latestTime = stats.mtimeMs;
-                                    activeId = dir.name;
-                                }
-                            }
-                        } catch (_) {}
-                    }
-                }
-            }
+        // If no cached thread, try to find one for the active workspace
+        if (!activeId) {
+            activeId = findConversationIdByTitle(threadName) || await getActiveThreadId(port, targetIdToUse);
         }
 
         if (activeId) {
             const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
             const logsDir = path.join(os.homedir(), '.gemini', appDataName, 'brain', activeId, '.system_generated', 'logs');
-            const overviewPath = path.join(logsDir, 'overview.txt');
             const transcriptPath = path.join(logsDir, 'transcript.jsonl');
+            const overviewPath = path.join(logsDir, 'overview.txt');
             
-            // Try transcript.jsonl first (new IDE format), then overview.txt (legacy)
             const logPath = fs.existsSync(transcriptPath) ? transcriptPath : (fs.existsSync(overviewPath) ? overviewPath : null);
             const isTranscript = logPath === transcriptPath;
             
             if (logPath) {
                 const content = fs.readFileSync(logPath, 'utf8');
                 const lines = content.split('\n').filter(l => l.trim());
-                let lastUserMsg = null;
                 let modelMsgs = [];
                 
-                // For transcript.jsonl, the format uses 'type' and 'source' differently:
-                // - USER messages: source=USER_EXPLICIT, type=USER_INPUT
-                // - MODEL responses: source=MODEL, type=PLANNER_RESPONSE (the final text response)
-                // We skip non-content entries like VIEW_FILE, RUN_COMMAND, etc.
                 for (let i = lines.length - 1; i >= 0; i--) {
                     try {
                         const entry = JSON.parse(lines[i]);
-                        
-                        if (isTranscript) {
-                            // transcript.jsonl format: look for PLANNER_RESPONSE as the model's text answer
-                            if (entry.source === 'USER_EXPLICIT' && entry.content) {
-                                const reqMatch = entry.content.match(/<USER_REQUEST>\n?([\s\S]*?)\n?<\/USER_REQUEST>/);
-                                lastUserMsg = reqMatch ? reqMatch[1].trim() : entry.content.substring(0, 200);
-                                break;
-                            }
-                            if (entry.source === 'MODEL' && entry.type === 'PLANNER_RESPONSE' && entry.content && entry.content.trim()) {
-                                modelMsgs.unshift(entry.content.trim());
-                            }
-                        } else {
-                            // overview.txt format (legacy)
-                            if (entry.source === 'USER_EXPLICIT' && entry.content) {
-                                const reqMatch = entry.content.match(/<USER_REQUEST>\n?([\s\S]*?)\n?<\/USER_REQUEST>/);
-                                lastUserMsg = reqMatch ? reqMatch[1].trim() : entry.content.substring(0, 200);
-                                break;
-                            }
-                            if (entry.source === 'MODEL' && entry.content && entry.content.trim()) {
+                        if (entry.source === 'USER_EXPLICIT' && entry.content) break;
+                        if (entry.source === 'MODEL') {
+                            if (isTranscript && entry.type !== 'PLANNER_RESPONSE') continue;
+                            if (entry.content && entry.content.trim()) {
                                 modelMsgs.unshift(entry.content.trim());
                             }
                         }
@@ -782,28 +713,16 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                 }
                 
                 if (modelMsgs.length > 0) {
-                    console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)} | Target: ${targetWorkspaceName || 'Global Fallback'}`);
+                    console.log(`[getFullLatestResponse] Filesystem fallback: thread ${activeId.substring(0, 8)}`);
                     return { text: modelMsgs.join('\n\n') + modalText, buttons: modalButtons };
-                } else if (modalText) {
-                    return { text: modalText.trim(), buttons: modalButtons };
                 }
             }
-        } else {
-            // No active thread found — this is likely a fresh workspace switch with no chat selected
-            console.log(`[getFullLatestResponse] No active thread found for workspace "${targetWorkspaceName || 'unknown'}" — returning no-chat-history`);
-            if (modalText) return { text: modalText.trim(), buttons: modalButtons };
-            return { text: t('latest.not_found_active'), buttons: null };
         }
     } catch (e) {
-        console.log('[getFullLatestResponse] File-system extraction failed:', e.message);
+        console.log('[getFullLatestResponse] Filesystem fallback failed:', e.message);
     }
-
-    // --- Fallback: DOM extraction (when no preferred window or file-system failed) ---
-    const domResult = await _domLatestExtraction(port, targetIdToUse);
-    if (domResult) return { text: domResult + modalText, buttons: modalButtons };
     
     if (modalText) return { text: modalText.trim(), buttons: modalButtons };
-
     return { text: t('latest.not_found_active'), buttons: null };
 }
 
