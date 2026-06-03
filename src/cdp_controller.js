@@ -14,6 +14,7 @@ let windowCache = [];
 // Set by snapshotChatState after a message is sent, used by getFullLatestResponse
 // so /latest doesn't have to guess which thread to read from.
 let lastResolvedThreadId = null;
+function getLastResolvedThreadId() { return lastResolvedThreadId; }
 
 /**
  * Shared target resolver — fetches CDP targets, filters, and sorts.
@@ -1888,7 +1889,8 @@ module.exports = {
     getActiveThreadId,
     getActiveThreadInfo,
     setActiveWorkspace,
-    switchStandaloneWorkspace
+    switchStandaloneWorkspace,
+    getLastResolvedThreadId
 };
 
 async function captureFullIDEScreenshot(port) {
