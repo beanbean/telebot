@@ -197,10 +197,6 @@ const CHAT_EXTRACT_EXPR = `
                 text = text.replace(/Worked for \\d+s/gi, '');
                 text = text.replace(/(?<!\\d)\\d{1,2}:\\d{2}(?:\\s*(?:AM|PM))?(?!\\d)/ig, '');
                 text = text.replace(/Thinking.../g, "").replace(/Gelişim App Dev/g, "");
-                const swipeText = t('agent.swipe_to_reply').replace(/<[^>]+>/g, '');
-                if (swipeText) {
-                    text = text.replace(new RegExp(swipeText.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'gi'), "");
-                }
 
                 text = text.replace(/^\\s*(Plan|Execute|Review|Task|Walkthrough|Implementation Plan)\\s*$/gm, '');
                 text = text.replace(/undo/g, '');
@@ -268,7 +264,6 @@ const CHAT_EXTRACT_EXPR = `
                 if (list) {
                     const msgs = [];
                     for (let child of list.children) {
-                        let isUser = !!child.querySelector('.bg-input');
                         let clone = child.cloneNode(true);
                         
                         Array.from(clone.querySelectorAll('style, .material-icons, .material-symbols-outlined, .material-symbols-rounded, .google-symbols, .codicon, [class*="icon"]')).forEach(el => el.remove());
@@ -278,13 +273,17 @@ const CHAT_EXTRACT_EXPR = `
                         
                         Array.from(clone.querySelectorAll('button, [role="button"]')).forEach(el => el.remove());
                         
-                        if (isUser) {
-                            const userInput = clone.querySelector('.bg-input');
-                            let uText = userInput ? userInput.innerText : "";
-                            if (userInput) userInput.remove();
-                            
-                            uText = cleanText(uText);
-                            if (uText) msgs.push("👤 User:\\n" + uText);
+                        let userNodes = Array.from(clone.querySelectorAll('.bg-input, [data-message-author="user"], [class*="group/user-input-step"]'));
+                        if (userNodes.length === 0 && clone.className && clone.className.includes('user-message')) {
+                            userNodes = [clone];
+                        }
+                        
+                        if (userNodes.length > 0) {
+                            userNodes.forEach(un => {
+                                let uText = cleanText(un.innerText || un.textContent);
+                                if (uText) msgs.push("👤 User:\\n" + uText);
+                                un.remove(); // Remove user text from clone so agent text is left
+                            });
                             
                             let aText = cleanText(nodeToMd(clone));
                             if (aText) msgs.push("🤖 Agent:\\n" + aText);
@@ -458,19 +457,38 @@ async function _domLatestExtraction(port, specificTargetId = null) {
             const { Runtime } = client;
             await Runtime.enable();
             
-            const expr = CHAT_EXTRACT_EXPR.replace(
-                /extractedText\s*=\s*msgs\.join/g,
-                "extractedText = (function(){ let idx = -1; for(let i=msgs.length-1; i>=0; i--) { if(msgs[i].startsWith('👤 User:')) { idx = i; break; } } return idx !== -1 ? msgs.slice(idx) : msgs.slice(-2); })().join"
-            );
-            
+            // Extract the whole chat history from the DOM
             const res = await Runtime.evaluate({
-                expression: expr,
+                expression: CHAT_EXTRACT_EXPR.replace('} catch(e) {}', '} catch(e) { extractedText = "ERROR_DOM: " + e.message; }'),
                 returnByValue: true
             });
             await client.close();
             
             if (res.result?.value && res.result.value.trim() !== '') {
-                return res.result.value;
+                const fullText = res.result.value.trim();
+                if (fullText.startsWith('ERROR_DOM:')) {
+                    console.debug('[_domLatestExtraction] DOM error:', fullText);
+                    continue; // Try next candidate
+                }
+                
+                // Try to find the last user message
+                const parts = fullText.split('👤 User:');
+                if (parts.length > 1) {
+                    const lastTurn = parts[parts.length - 1];
+                    const agentParts = lastTurn.split('🤖 Agent:');
+                    if (agentParts.length > 1) {
+                        return agentParts.slice(1).join('\\n\\n').trim();
+                    }
+                    return lastTurn.trim();
+                }
+                
+                // If no User tag found, the fallback might have just returned all text.
+                // We'll return the last 1500 chars to be safe, or just the whole thing
+                // if it's small, because we don't want to return a huge wall of text.
+                if (fullText.length > 3000) {
+                    return fullText.substring(fullText.length - 3000);
+                }
+                return fullText;
             }
         } catch(e) {}
     }
@@ -541,8 +559,46 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
     
     // --- Primary: file-system extraction from the active thread's log ---
     try {
+        let targetWorkspaceName = null;
+        if (targetIdToUse) {
+            const candidates = await resolveTargets(port, false);
+            const t = candidates.find(c => c.id === targetIdToUse);
+            if (t && t.title) {
+                targetWorkspaceName = t.title.split(' - ')[0].trim();
+            }
+        }
+        
         // Priority: explicit threadName > last snapshot (most reliable) > dynamic resolution
-        const activeId = findConversationIdByTitle(threadName) || (targetIdToUse ? null : lastResolvedThreadId) || await getActiveThreadId(port, targetIdToUse);
+        let activeId = findConversationIdByTitle(threadName) || (targetIdToUse ? null : lastResolvedThreadId) || await getActiveThreadId(port, targetIdToUse);
+        
+        // If no activeId was found from the DOM/snapshot, try a workspace-filtered global fallback
+        if (!activeId && targetWorkspaceName) {
+            const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
+            const brainPath = path.join(os.homedir(), '.gemini', appDataName, 'brain');
+            if (fs.existsSync(brainPath)) {
+                const dirs = fs.readdirSync(brainPath, { withFileTypes: true });
+                let latestTime = 0;
+                for (const dir of dirs) {
+                    if (!dir.isDirectory()) continue;
+                    const logsDir = path.join(brainPath, dir.name, '.system_generated', 'logs');
+                    const transcriptPath = path.join(logsDir, 'transcript.jsonl');
+                    if (fs.existsSync(transcriptPath)) {
+                        // Very fast read of the first few lines to check workspace
+                        try {
+                            const stats = fs.statSync(transcriptPath);
+                            if (stats.mtimeMs > latestTime) {
+                                const head = fs.readFileSync(transcriptPath, 'utf8').substring(0, 5000);
+                                if (head.includes(targetWorkspaceName) || head.includes('project-profile')) {
+                                    latestTime = stats.mtimeMs;
+                                    activeId = dir.name;
+                                }
+                            }
+                        } catch (_) {}
+                    }
+                }
+            }
+        }
+
         if (activeId) {
             const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
             const logsDir = path.join(os.homedir(), '.gemini', appDataName, 'brain', activeId, '.system_generated', 'logs');
@@ -592,7 +648,7 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                 }
                 
                 if (modelMsgs.length > 0) {
-                    console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)}`);
+                    console.log(`[getFullLatestResponse] Read from ${isTranscript ? 'transcript.jsonl' : 'overview.txt'} for thread ${activeId.substring(0, 8)} | Target: ${targetWorkspaceName || 'Global Fallback'}`);
                     return { text: modelMsgs.join('\n\n') + modalText, buttons: modalButtons };
                 } else if (modalText) {
                     return { text: modalText.trim(), buttons: modalButtons };
@@ -1201,9 +1257,11 @@ async function listAgentThreads(port) {
 
 function setActiveWorkspace(name) {
     activeWorkspaceName = name ? name.toLowerCase() : null;
+    lastResolvedThreadId = null;
+    preferredTargetId = null;
 }
 
-async function switchAgentThread(port, threadName) {
+async function switchAgentThread(port, threadName, targetWorkspaceName = null) {
     const candidates = await resolveTargets(port, false);
     for (const target of candidates) {
         try {
@@ -1277,21 +1335,62 @@ async function switchAgentThread(port, threadName) {
             if (openRes.result?.value === 'no-icon') { await client.close(); continue; }
             await new Promise(r => setTimeout(r, openRes.result?.value === 'opened' ? 800 : 200));
             const threadNameStr = JSON.stringify(threadName);
-            const res = await Runtime.evaluate({
+            
+            // Filter the quickpick list by typing the thread name to handle virtualization
+            await Runtime.evaluate({
                 expression: `(() => {
+                    const input = document.querySelector('input[placeholder*="Search all"], input[placeholder="Select a conversation"], input[placeholder*="convo"]');
+                    if (input) {
+                        input.focus();
+                        input.value = '';
+                        try { document.execCommand("insertText", false, ${threadNameStr}); } catch(e) {}
+                        if (!input.value) {
+                            const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+                            if (setter) setter.call(input, ${threadNameStr});
+                            else input.value = ${threadNameStr};
+                        }
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                })()`
+            });
+            
+            await new Promise(r => setTimeout(r, 600)); // Wait for filtering animation
+            
+            const res = await Runtime.evaluate({
+                expression: `(async () => {
                     const input = document.querySelector('input[placeholder*="Search all"], input[placeholder="Select a conversation"], input[placeholder*="convo"]');
                     if (!input) return false;
                     let container = input;
                     for (let i = 0; i < 15; i++) { if (container.parentElement) container = container.parentElement; }
-                    const rows = Array.from(container.querySelectorAll('div.cursor-pointer')).filter(r => r.className.includes('px-2.5'));
-                    const target = rows.find(row => {
-                        const nameEl = row.querySelector('span.truncate, span.text-sm span');
-                        const name = nameEl ? nameEl.textContent.trim() : '';
-                        return name === ${threadNameStr};
-                    });
-                    if (target) { target.click(); return true; }
+                    
+                    let target = null;
+                    for (let retry = 0; retry < 10; retry++) {
+                        const rows = Array.from(container.querySelectorAll('div.cursor-pointer')).filter(r => r.className.includes('px-2.5'));
+                        target = rows.find(row => {
+                            const nameEl = row.querySelector('span.truncate, span.text-sm span');
+                            const name = nameEl ? nameEl.textContent.trim() : '';
+                            return name === ${threadNameStr} || (name.length > 10 && ${threadNameStr}.startsWith(name.replace('...', '')));
+                        });
+                        if (target) break;
+                        await new Promise(r => setTimeout(r, 300));
+                    }
+                    
+                    if (target) {
+                        target.scrollIntoView();
+                        target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                        target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                        target.click(); 
+                        return true; 
+                    }
+                    
+                    // If not found, close the popup so it doesn't get stuck
+                    document.body.click();
+                    const esc = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true });
+                    input.dispatchEvent(esc);
+                    document.dispatchEvent(esc);
                     return false;
                 })()`,
+                awaitPromise: true,
                 returnByValue: true
             });
             await client.close();
@@ -1300,13 +1399,13 @@ async function switchAgentThread(port, threadName) {
                 // When selecting a thread from a different workspace, the IDE shows
                 // a quickpick asking where to open it. We prefer "Open in workspace".
                 await new Promise(r => setTimeout(r, 500));
+                let didClickWorkspace = false;
                 try {
                     const client2 = await CDP({ target: target.webSocketDebuggerUrl });
                     const { Runtime: Runtime2 } = client2;
                     await Runtime2.enable();
-                    await Runtime2.evaluate({
+                    const qRes = await Runtime2.evaluate({
                         expression: `(() => {
-                            // Look for the quickpick popup with workspace options
                             const items = Array.from(document.querySelectorAll('[role="option"], .quick-input-list-entry, .monaco-list-row'));
                             const wsOption = items.find(el => {
                                 const text = (el.textContent || '').toLowerCase();
@@ -1323,21 +1422,54 @@ async function switchAgentThread(port, threadName) {
                                 targetOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
                                 targetOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
                                 targetOption.click();
-                                return true;
+                                return targetOption === wsOption ? 'workspace' : 'current';
                             }
-                            return false;
-                        })()`
+                            return null;
+                        })()`,
+                        returnByValue: true
                     });
+                    didClickWorkspace = qRes.result?.value === 'workspace';
                     await client2.close();
                 } catch(_) { /* popup may not appear for same-workspace threads */ }
                 
+                let finalTargetId = target.id;
+                let finalWsUrl = target.webSocketDebuggerUrl;
+
+                if (didClickWorkspace && targetWorkspaceName) {
+                    console.log(`[switchAgentThread] Clicked 'Open in workspace'. Waiting for new window for: ${targetWorkspaceName}`);
+                    const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ');
+                    const searchName = normalize(targetWorkspaceName);
+                    
+                    let foundNewTarget = null;
+                    for (let i = 0; i < 15; i++) {
+                        await new Promise(r => setTimeout(r, 1000));
+                        try {
+                            // Fetch raw targets without activeWorkspaceName filter bias
+                            const raw = await httpGet(`http://127.0.0.1:${port}/json`);
+                            const targets = JSON.parse(raw);
+                            foundNewTarget = targets.find(t => 
+                                (t.type === 'page' || t.type === 'webview') &&
+                                t.webSocketDebuggerUrl &&
+                                !t.url.includes('devtools://') &&
+                                normalize(t.title).includes(searchName)
+                            );
+                            if (foundNewTarget) break;
+                        } catch(e) {}
+                    }
+                    if (foundNewTarget) {
+                        console.log(`[switchAgentThread] Found new window target: ${foundNewTarget.id}`);
+                        finalTargetId = foundNewTarget.id;
+                        finalWsUrl = foundNewTarget.webSocketDebuggerUrl;
+                    }
+                }
+
                 // Step 5: Wait for the new thread's chat input to become ready.
                 // Without this, the first message after switching gets lost because
                 // the editor hasn't loaded yet.
-                for (let waitAttempt = 0; waitAttempt < 6; waitAttempt++) {
+                for (let waitAttempt = 0; waitAttempt < 10; waitAttempt++) {
                     await new Promise(r => setTimeout(r, 500));
                     try {
-                        const client3 = await CDP({ target: target.webSocketDebuggerUrl });
+                        const client3 = await CDP({ target: finalWsUrl });
                         const { Runtime: Runtime3 } = client3;
                         await Runtime3.enable();
                         const readyCheck = await Runtime3.evaluate({
@@ -1356,7 +1488,7 @@ async function switchAgentThread(port, threadName) {
                     } catch(_) {}
                 }
                 
-                return target.id;
+                return finalTargetId;
             }
         } catch(e) { console.debug(`[switchAgentThread] error: ${e.message}`); }
     }
@@ -1465,8 +1597,8 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
 
     // 2. Fallback: Get Thread ID via file-system logs of the app
     // New IDE uses transcript.jsonl, legacy used overview.txt — check both
-    // Only apply global fallback if no specific target is requested AND no active workspace is set!
-    if (!threadId && !specificTargetId && !activeWorkspaceName) {
+    // If activeWorkspaceName is set or specificTargetId provides a workspace, filter by it.
+    if (!threadId) {
         try {
             const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
             const brainPath = path.join(os.homedir(), '.gemini', appDataName, 'brain');
@@ -1474,30 +1606,51 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                 const dirs = fs.readdirSync(brainPath, { withFileTypes: true });
                 let latestTime = 0;
                 
+                let filterWorkspace = null;
+                if (specificTargetId) {
+                    const c = candidates.find(t => t.id === specificTargetId);
+                    if (c && c.title) filterWorkspace = c.title.split(' - ')[0].trim();
+                } else if (activeWorkspaceName) {
+                    filterWorkspace = activeWorkspaceName;
+                }
+                
                 for (const dir of dirs) {
                     if (!dir.isDirectory()) continue;
                     const logsDir = path.join(brainPath, dir.name, '.system_generated', 'logs');
+                    const transcriptPath = path.join(logsDir, 'transcript.jsonl');
+                    const overviewPath = path.join(logsDir, 'overview.txt');
                     
-                    // Check both log files — prefer the one with the latest mtime
                     let bestMtime = 0;
-                    for (const logFile of ['transcript.jsonl', 'overview.txt']) {
-                        const logPath = path.join(logsDir, logFile);
-                        try {
-                            const stats = fs.statSync(logPath);
-                            if (stats.mtimeMs > bestMtime) bestMtime = stats.mtimeMs;
-                        } catch (_) {}
-                    }
+                    try { if (fs.existsSync(transcriptPath)) bestMtime = Math.max(bestMtime, fs.statSync(transcriptPath).mtimeMs); } catch (_) {}
+                    try { if (fs.existsSync(overviewPath)) bestMtime = Math.max(bestMtime, fs.statSync(overviewPath).mtimeMs); } catch (_) {}
                     
                     if (bestMtime > latestTime) {
-                        latestTime = bestMtime;
-                        threadId = dir.name;
+                        // Apply workspace filtering if required
+                        let match = true;
+                        if (filterWorkspace) {
+                            match = false;
+                            const logPath = fs.existsSync(transcriptPath) ? transcriptPath : (fs.existsSync(overviewPath) ? overviewPath : null);
+                            if (logPath) {
+                                try {
+                                    const head = fs.readFileSync(logPath, 'utf8').substring(0, 5000);
+                                    if (head.includes(filterWorkspace) || head.includes('project-profile')) {
+                                        match = true;
+                                    }
+                                } catch (_) {}
+                            }
+                        }
+                        
+                        if (match) {
+                            latestTime = bestMtime;
+                            threadId = dir.name;
+                        }
                     }
                 }
             }
         } catch(e) { console.debug(`[getActiveThreadInfo] fallback error: ${e.message}`); }
     }
 
-    if (threadId) {
+    if (threadId || workspaceName) {
         return { id: threadId, name: threadName, workspace: workspaceName };
     }
     return null;
@@ -1661,6 +1814,7 @@ module.exports = {
     closeWindow,
     listAgentThreads,
     switchAgentThread,
+    CHAT_EXTRACT_EXPR,
     getActiveThreadId,
     getActiveThreadInfo,
     setActiveWorkspace,

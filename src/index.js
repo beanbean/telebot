@@ -94,6 +94,28 @@ if (ALLOWED_CHAT_IDS.length === 0) {
 }
 
 const bot = new Telegraf(process.env.BOT_TOKEN, { handlerTimeout: 900000 }); // 15 minutes timeout to allow long /ask requests
+
+let isTurboRunning = false;
+
+// Middleware to prevent project switching or concurrent tasks while Turbo Mode is executing
+bot.use(async (ctx, next) => {
+    if (isTurboRunning) {
+        const text = ctx.message?.text || '';
+        const cbData = ctx.callbackQuery?.data || '';
+        
+        // Allow the user to toggle off turbo mode, but block everything else
+        if (text.startsWith('/turbo') || text.startsWith('🚀')) {
+            return next();
+        }
+        
+        if (text) {
+            return ctx.reply(t('turbo.is_running') || '⏳ Turbo Mod şu anda çalışıyor! Lütfen işlemin bitmesini bekleyin veya iptal etmek için Turbo modunu kapatın.');
+        } else if (cbData) {
+            return ctx.answerCbQuery(t('turbo.is_running_short') || '⏳ Lütfen Turbo Modun bitmesini bekleyin.', { show_alert: true }).catch(()=>{});
+        }
+    }
+    return next();
+});
 function getCDPPort(app = process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') {
     if (app === 'ide') {
         return parseInt(process.env.IDE_CDP_PORT || '9334', 10);
@@ -579,7 +601,10 @@ bot.command('start', async (ctx) => {
 
 const handleLatest = async (ctx) => {
     try {
-        let _latestRes = await getFullLatestResponse(CDP_PORT);
+        const { resolveTargets } = require('./cdp_controller');
+        const candidates = await resolveTargets(CDP_PORT, false);
+        const targetId = candidates[0]?.id || null;
+        let _latestRes = await getFullLatestResponse(CDP_PORT, targetId);
         let text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
         let buttons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
         
@@ -774,7 +799,7 @@ bot.hears(/^\/agents_(\d+)$/, async (ctx) => {
     const num = parseInt(ctx.match[1], 10);
     if (num > 0 && num <= cachedAgentThreads.length) {
         const thread = cachedAgentThreads[num - 1];
-        const targetId = await switchAgentThread(CDP_PORT, thread.name);
+        const targetId = await switchAgentThread(CDP_PORT, thread.name, thread.workspace);
         if (!targetId) {
             ctx.reply(t('agents.not_found') || '❌ Thread could not be selected.');
         } else {
@@ -2144,9 +2169,14 @@ bot.on('text', (ctx) => {
             let interactiveButtons = null;
 
             if (isTurboMode) {
-                const turboTargetId = explicitTargetId || getPreferredTargetId() || null;
-                text = await runTurboOrchestration(query, CDP_PORT, turboTargetId, ctx, createProgressHandler, stripQueryFromResponse);
-                targetId = turboTargetId;
+                isTurboRunning = true;
+                try {
+                    const turboTargetId = explicitTargetId || getPreferredTargetId() || null;
+                    text = await runTurboOrchestration(query, CDP_PORT, turboTargetId, ctx, createProgressHandler, stripQueryFromResponse);
+                    targetId = turboTargetId;
+                } finally {
+                    isTurboRunning = false;
+                }
             } else {
                 targetId = await sendViaCDP(query, CDP_PORT, explicitTargetId);
                 await ctx.reply(t('ask.sent'));
