@@ -562,33 +562,63 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
         let targetWorkspaceName = null;
         if (targetIdToUse) {
             const candidates = await resolveTargets(port, false);
-            const t = candidates.find(c => c.id === targetIdToUse);
-            if (t && t.title) {
-                targetWorkspaceName = t.title.split(' - ')[0].trim();
+            const tgt = candidates.find(c => c.id === targetIdToUse);
+            if (tgt && tgt.title) {
+                targetWorkspaceName = tgt.title.split(' - ')[0].trim();
             }
         }
         
         // Priority: explicit threadName > last snapshot (most reliable) > dynamic resolution
         let activeId = findConversationIdByTitle(threadName) || (targetIdToUse ? null : lastResolvedThreadId) || await getActiveThreadId(port, targetIdToUse);
         
+        // === STRICT WORKSPACE VALIDATION ===
+        // If we resolved an activeId and we know the target workspace, verify
+        // that the resolved thread actually belongs to that workspace.
+        // This prevents returning a stale response from a different workspace.
+        if (activeId && targetWorkspaceName && !threadName) {
+            const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
+            const checkTranscript = path.join(os.homedir(), '.gemini', appDataName, 'brain', activeId, '.system_generated', 'logs', 'transcript.jsonl');
+            if (fs.existsSync(checkTranscript)) {
+                try {
+                    const head = fs.readFileSync(checkTranscript, 'utf8').substring(0, 8000);
+                    // Extract the workspace URI from the transcript metadata
+                    const wsMatch = head.match(/\/([^/\\\s"]+)\s*\n/); // folder name from path in content
+                    const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ');
+                    const normalizedTarget = normalize(targetWorkspaceName);
+                    // Check if the transcript content mentions this workspace
+                    const normalizedHead = normalize(head);
+                    if (!normalizedHead.includes(normalizedTarget)) {
+                        console.log(`[getFullLatestResponse] Thread ${activeId.substring(0, 8)} does NOT belong to workspace "${targetWorkspaceName}" — discarding`);
+                        activeId = null;
+                    }
+                } catch (_) {}
+            }
+        }
+        
         // If no activeId was found from the DOM/snapshot, try a workspace-filtered global fallback
-        if (!activeId && targetWorkspaceName) {
+        // BUT only if we have a lastResolvedThreadId or explicit threadName — i.e., the user
+        // has previously interacted with a chat. Without that, a fresh workspace switch
+        // should show "no chat history" instead of grabbing a random conversation.
+        if (!activeId && targetWorkspaceName && (lastResolvedThreadId || threadName)) {
             const appDataName = (process.env.ANTIGRAVITY_PREFERRED_APP || 'agent') === 'ide' ? 'antigravity-ide' : 'antigravity';
             const brainPath = path.join(os.homedir(), '.gemini', appDataName, 'brain');
             if (fs.existsSync(brainPath)) {
                 const dirs = fs.readdirSync(brainPath, { withFileTypes: true });
                 let latestTime = 0;
+                const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ');
+                const normalizedTarget = normalize(targetWorkspaceName);
                 for (const dir of dirs) {
                     if (!dir.isDirectory()) continue;
                     const logsDir = path.join(brainPath, dir.name, '.system_generated', 'logs');
                     const transcriptPath = path.join(logsDir, 'transcript.jsonl');
                     if (fs.existsSync(transcriptPath)) {
-                        // Very fast read of the first few lines to check workspace
                         try {
                             const stats = fs.statSync(transcriptPath);
                             if (stats.mtimeMs > latestTime) {
-                                const head = fs.readFileSync(transcriptPath, 'utf8').substring(0, 5000);
-                                if (head.includes(targetWorkspaceName) || head.includes('project-profile')) {
+                                const head = fs.readFileSync(transcriptPath, 'utf8').substring(0, 8000);
+                                const normalizedHead = normalize(head);
+                                // Strict match: workspace folder name must appear in the transcript
+                                if (normalizedHead.includes(normalizedTarget)) {
                                     latestTime = stats.mtimeMs;
                                     activeId = dir.name;
                                 }
@@ -654,6 +684,11 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                     return { text: modalText.trim(), buttons: modalButtons };
                 }
             }
+        } else {
+            // No active thread found — this is likely a fresh workspace switch with no chat selected
+            console.log(`[getFullLatestResponse] No active thread found for workspace "${targetWorkspaceName || 'unknown'}" — returning no-chat-history`);
+            if (modalText) return { text: modalText.trim(), buttons: modalButtons };
+            return { text: t('latest.not_found_active'), buttons: null };
         }
     } catch (e) {
         console.log('[getFullLatestResponse] File-system extraction failed:', e.message);
@@ -1632,8 +1667,9 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                             const logPath = fs.existsSync(transcriptPath) ? transcriptPath : (fs.existsSync(overviewPath) ? overviewPath : null);
                             if (logPath) {
                                 try {
-                                    const head = fs.readFileSync(logPath, 'utf8').substring(0, 5000);
-                                    if (head.includes(filterWorkspace) || head.includes('project-profile')) {
+                                    const head = fs.readFileSync(logPath, 'utf8').substring(0, 8000);
+                                    const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ');
+                                    if (normalize(head).includes(normalize(filterWorkspace))) {
                                         match = true;
                                     }
                                 } catch (_) {}

@@ -601,14 +601,14 @@ bot.command('start', async (ctx) => {
 
 const handleLatest = async (ctx) => {
     try {
-        const { resolveTargets } = require('./cdp_controller');
-        const candidates = await resolveTargets(CDP_PORT, false);
-        const targetId = candidates[0]?.id || null;
+        // Use the preferred target (set by workspace switch or /window command)
+        // instead of blindly picking candidates[0] which may be the wrong window
+        const targetId = getPreferredTargetId() || null;
         let _latestRes = await getFullLatestResponse(CDP_PORT, targetId);
         let text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
         let buttons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
         
-        const header = await getChatHeader(null, t('latest.title'));
+        const header = await getChatHeader(targetId, t('latest.title'));
         await sendLongMessage(ctx, text, header, buttons);
     } catch (err) {
         ctx.reply(t('latest.error', { error: err.message }));
