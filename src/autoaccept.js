@@ -85,7 +85,7 @@ function buildObserverScript() {
     var AMBIGUOUS_TEXTS = { 'run': true, 'accept': true, 'allow': true, 'retry': true, 'continue': true, 'çalıştır': true, 'kabul et': true, 'izin ver': true, 'yeniden dene': true, 'devam et': true };
     var SIDEBAR_SELECTORS = '[role="tree"], [role="treeitem"], [role="listbox"], [role="option"], .monaco-list, .conversation-list, .chat-list, .sidebar-list';
     // Containers where we should NEVER click buttons (Settings, Notes, Explorer, Preferences, etc.)
-    var EXCLUDED_SELECTORS = '.settings-editor, .settings-body, .preferences-editor, .explorer-viewlet, .notifications-center, .menubar, .statusbar, .editor-group-container, .notes-editor, [class*="SettingsEditor"], [class*="settings-widget"], [role="tabpanel"][aria-label*="Settings"], [role="tabpanel"][aria-label*="Ayarlar"], .dialog-shadow, .quick-input-widget';
+    var EXCLUDED_SELECTORS = '.settings-editor, .settings-body, .preferences-editor, .explorer-viewlet, .notifications-center, .menubar, .statusbar, .notes-editor, [class*="SettingsEditor"], [class*="settings-widget"], [role="tabpanel"][aria-label*="Settings"], [role="tabpanel"][aria-label*="Ayarlar"], .dialog-shadow, .quick-input-widget';
 
     function isSidebarElement(el) {
         if (!el || !el.closest) return false;
