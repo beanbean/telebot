@@ -1128,6 +1128,7 @@ async function sendViaCDP(text, port, specificTargetId = null) {
 
 async function triggerNewChat(port) {
     const candidates = await resolveTargets(port, false);
+    const activeWsStr = activeWorkspaceName ? JSON.stringify(activeWorkspaceName.toLowerCase()) : 'null';
 
     for (const target of candidates) {
         try {
@@ -1138,10 +1139,34 @@ async function triggerNewChat(port) {
                 expression: `
                     ${UI_LOCATORS_SCRIPT}
                     (() => {
+                        const activeWs = ${activeWsStr};
+                        if (activeWs) {
+                            const cards = Array.from(document.querySelectorAll('[data-project-card="true"], [data-workspace-card="true"]'));
+                            const targetCard = cards.find(card => {
+                                const cloned = card.cloneNode(true);
+                                cloned.querySelectorAll('svg').forEach(el => el.remove());
+                                const wsNameRaw = cloned.textContent.trim();
+                                const wsNameCleaned = wsNameRaw.replace(/\\s+\\d+$/, '').trim().toLowerCase();
+                                return wsNameCleaned === activeWs || wsNameCleaned.includes(activeWs) || activeWs.includes(wsNameCleaned);
+                            });
+                            
+                            if (targetCard) {
+                                const parent = targetCard.closest('[role="button"]') || targetCard.parentElement;
+                                if (parent) {
+                                    const plusIcon = parent.querySelector('button[aria-label*="New" i], svg.lucide-plus, svg.lucide-message-square-plus, svg[class*="plus"]');
+                                    const plusBtn = plusIcon?.closest('button, [role="button"], a') || plusIcon?.parentElement || plusIcon;
+                                    if (plusBtn && typeof plusBtn.click === 'function') {
+                                        plusBtn.click();
+                                        return { clicked: true, tag: plusBtn.tagName, type: 'workspace-specific' };
+                                    }
+                                }
+                            }
+                        }
+
                         const btn = AG_UI.getNewChatButton();
                         if (btn && typeof btn.click === 'function') {
                             btn.click();
-                            return { clicked: true, tag: btn.tagName };
+                            return { clicked: true, tag: btn.tagName, type: 'generic' };
                         }
                         return { clicked: false };
                     })()
