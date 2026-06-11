@@ -4,7 +4,7 @@
   "description": "Control your Antigravity IDE remotely via Telegram. Send messages, switch models, manage workspaces, take screenshots — all from your phone.",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/watchdog.js",
+    "start": "node src/index.js",
     "dev": "node src/index.js",
     "setup": "bash scripts/install.sh",
     "setup:win": "powershell -ExecutionPolicy Bypass -File scripts/install.ps1",

@@ -1787,7 +1787,7 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                 if (threadId) break;
                 if (threadName && res.result.value.nameSource !== 'document-title') break;
             }
-        } catch(e) { console.log(`[getActiveThreadInfo] target error: ${e.message}`); }
+        } catch(e) { console.debug(`[getActiveThreadInfo] target error: ${e.message}`); }
     }
 
     if (!threadId && threadName) {
@@ -1847,7 +1847,7 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                     }
                 }
             }
-        } catch(e) { console.log(`[getActiveThreadInfo] fallback error: ${e.message}`); }
+        } catch(e) { console.debug(`[getActiveThreadInfo] fallback error: ${e.message}`); }
     }
 
     if (threadId || workspaceName) {

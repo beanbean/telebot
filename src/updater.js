@@ -142,8 +142,9 @@ async function checkForUpdates() {
 function performUpdate() {
     return new Promise((resolve, reject) => {
         const pmId = process.env.pm_id;
-        if (!pmId) {
-            return reject(new Error('Not running under PM2. Please update manually:\n`cd ' + PROJECT_ROOT + ' && git pull && npm install`'));
+        const isWatchdog = process.env.WATCHDOG === 'true';
+        if (!pmId && !isWatchdog) {
+            return reject(new Error('Not running under PM2 or Watchdog. Please update manually:\n`cd ' + PROJECT_ROOT + ' && git pull && npm install`'));
         }
 
         // Step 1: Check if package.json will change before we merge
@@ -196,9 +197,13 @@ function performUpdate() {
                     
                     // Delay restart by 3 seconds to let Telegram API deliver the message
                     setTimeout(() => {
-                        exec(`pm2 restart ${pmId}`, (err2) => {
-                            if (err2) console.error(`PM2 restart failed: ${err2.message}`);
-                        });
+                        if (isWatchdog) {
+                            process.exit(0);
+                        } else {
+                            exec(`pm2 restart ${pmId}`, (err2) => {
+                                if (err2) console.error(`PM2 restart failed: ${err2.message}`);
+                            });
+                        }
                     }, 3000);
                 };
 
