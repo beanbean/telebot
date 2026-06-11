@@ -276,6 +276,20 @@ const keysToInject = {
         de: 'CronCrew-Status anzeigen',
         fr: 'Afficher le statut de CronCrew',
         es: 'Mostrar el estado de CronCrew'
+    },
+    'update.auto_updating': {
+        en: '🔄 <b>[Auto-Update]</b> Developer update detected (v{version} - {commit}).\\nMerging changes and updating...',
+        tr: '🔄 <b>[Otomatik Güncelleme]</b> Geliştirici güncellemesi algılandı (v{version} - {commit}).\\nDeğişiklikler birleştiriliyor ve güncelleniyor...',
+        de: '🔄 <b>[Auto-Update]</b> Entwickler-Update erkannt (v{version} - {commit}).\\nÄnderungen werden zusammengeführt und aktualisiert...',
+        fr: '🔄 <b>[Mise à jour auto]</b> Mise à jour du développeur détectée (v{version} - {commit}).\\nFusion des changements et mise à jour en cours...',
+        es: '🔄 <b>[Actualización automática]</b> Actualización del desarrollador detectada (v{version} - {commit}).\\nFusionando cambios y actualizando...'
+    },
+    'update.auto_update_failed': {
+        en: '❌ <b>[Auto-Update]</b> Update failed: {error}',
+        tr: '❌ <b>[Otomatik Güncelleme]</b> Güncelleme başarısız oldu: {error}',
+        de: '❌ <b>[Auto-Update]</b> Update fehlgeschlagen: {error}',
+        fr: '❌ <b>[Mise à jour auto]</b> Échec de la mise à jour : {error}',
+        es: '❌ <b>[Actualización automática]</b> Error al actualizar: {error}'
     }
 };
 

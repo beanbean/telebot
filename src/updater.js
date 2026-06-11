@@ -112,8 +112,18 @@ async function checkForUpdates() {
     
     try { remoteVersion = await getRemoteVersion(); } catch(_) {}
 
-    const available = (remoteCommit && remoteCommit !== local.commitHash) ||
-                      (remoteVersion && remoteVersion !== local.version);
+    let hasNewCommits = false;
+    if (remoteCommit) {
+        try {
+            // Check if origin/main is already merged into HEAD (ancestor of HEAD)
+            execSync('git merge-base --is-ancestor origin/main HEAD', { cwd: PROJECT_ROOT });
+        } catch (_) {
+            // If the command fails, origin/main is not an ancestor, so we have new commits
+            hasNewCommits = true;
+        }
+    }
+
+    const available = hasNewCommits || (remoteVersion && remoteVersion !== local.version);
 
     return {
         available: !!available,
@@ -136,47 +146,77 @@ function performUpdate() {
             return reject(new Error('Not running under PM2. Please update manually:\n`cd ' + PROJECT_ROOT + ' && git pull && npm install`'));
         }
 
-        // Step 1: Check if package.json will change before we reset
+        // Step 1: Check if package.json will change before we merge
         exec('git fetch origin main && git diff --name-only HEAD origin/main', { cwd: PROJECT_ROOT }, (err, stdout) => {
             if (err) return reject(new Error(`git fetch failed: ${err.message}`));
             
             const diffOutput = stdout.trim();
             const packageChanged = diffOutput.includes('package.json') || diffOutput.includes('package-lock.json');
 
-            // Step 2: Force one-way sync (discard local changes)
-            exec('git reset --hard origin/main', { cwd: PROJECT_ROOT }, (err2, resetOut) => {
-                if (err2) return reject(new Error(`git reset failed: ${err2.message}`));
-
-            const nextStep = () => {
-                // Set update flag for index.js
-                try { fs.writeFileSync(path.join(PROJECT_ROOT, '.update_flag'), '1'); } catch (e) {}
-                
-                // Resolve immediately so the bot can send the confirmation message
-                resolve({ updated: true, message: t('update.success') });
-                
-                // Delay restart by 3 seconds to let Telegram API deliver the message
-                setTimeout(() => {
-                    exec(`pm2 restart ${pmId}`, (err2) => {
-                        if (err2) console.error(`PM2 restart failed: ${err2.message}`);
-                    });
-                }, 3000);
-            };
-
-            if (packageChanged) {
-                exec('npm install --production', { cwd: PROJECT_ROOT }, (err3) => {
-                    if (err3) console.error('npm install warning:', err3.message);
-                    nextStep();
-                });
-            } else {
-                nextStep();
+            // Step 2: Check if working directory is dirty, and stash if so to prevent conflicts with unstaged changes
+            let stashed = false;
+            try {
+                const isDirty = execSync('git status --porcelain', { cwd: PROJECT_ROOT }).toString().trim();
+                if (isDirty) {
+                    execSync('git stash', { cwd: PROJECT_ROOT });
+                    stashed = true;
+                }
+            } catch (e) {
+                console.error('[updater] Stash check failed:', e.message);
             }
-        }); // close exec git reset
+
+            // Step 3: Try to merge updates from the developer's main branch instead of discarding corrections with reset --hard
+            exec('git merge origin/main -m "Merge updates from developer"', { cwd: PROJECT_ROOT }, (err2, mergeOut) => {
+                if (err2) {
+                    // Merge failed (e.g., conflicts) -> abort the merge and restore stash
+                    try {
+                        execSync('git merge --abort', { cwd: PROJECT_ROOT });
+                    } catch (_) {}
+                    if (stashed) {
+                        try { execSync('git stash pop', { cwd: PROJECT_ROOT }); } catch (_) {}
+                    }
+                    return reject(new Error(`git merge failed (conflicts detected): ${err2.message}`));
+                }
+
+                // Merge succeeded. Restore stash if we had one.
+                if (stashed) {
+                    try {
+                        execSync('git stash pop', { cwd: PROJECT_ROOT });
+                    } catch (stashPopErr) {
+                        console.error('[updater] Failed to pop stash after successful merge:', stashPopErr.message);
+                    }
+                }
+
+                const nextStep = () => {
+                    // Set update flag for index.js
+                    try { fs.writeFileSync(path.join(PROJECT_ROOT, '.update_flag'), '1'); } catch (e) {}
+                    
+                    // Resolve immediately so the bot can send the confirmation message
+                    resolve({ updated: true, message: t('update.success') });
+                    
+                    // Delay restart by 3 seconds to let Telegram API deliver the message
+                    setTimeout(() => {
+                        exec(`pm2 restart ${pmId}`, (err2) => {
+                            if (err2) console.error(`PM2 restart failed: ${err2.message}`);
+                        });
+                    }, 3000);
+                };
+
+                if (packageChanged) {
+                    exec('npm install --production', { cwd: PROJECT_ROOT }, (err3) => {
+                        if (err3) console.error('npm install warning:', err3.message);
+                        nextStep();
+                    });
+                } else {
+                    nextStep();
+                }
+            }); // close exec git merge
         }); // close exec git fetch
     }); // close new Promise
 } // close performUpdate
 
 /**
- * Start periodic update checking. Sends Telegram notification when update is found.
+ * Start periodic update checking. Sends Telegram notification, fusions updates, and restarts bot.
  * @param {object} bot - Telegraf bot instance
  * @param {Array<string>} chatIds - Array of Chat IDs to send notifications to
  */
@@ -187,13 +227,24 @@ function startUpdateChecker(bot, chatIds) {
         try {
             const result = await checkForUpdates();
             if (result.available) {
-                const msg = t('update.available') +
-                    t('update.current_version', { version: result.localVersion, commit: result.localCommit }) +
-                    t('update.new_version_info', { version: result.remoteVersion, commit: result.remoteCommit }) +
-                    (result.remoteCommitMessage ? t('update.changelog', { message: result.remoteCommitMessage }) : `\n`) +
-                    t('update.click_to_download');
+                // Send auto-update starting message
+                const msg = t('update.auto_updating', { version: result.remoteVersion, commit: result.remoteCommit }) ||
+                            `🔄 <b>[Mise à jour auto]</b> Nouvelle mise à jour du développeur détectée.\nFusion des changements et mise à jour en cours...`;
+                
                 for (const chatId of chatIds) {
-                    bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' }).catch(() => {});
+                    await bot.telegram.sendMessage(chatId, msg, { parse_mode: 'HTML' }).catch(() => {});
+                }
+
+                // Execute the update
+                try {
+                    await performUpdate();
+                    // performUpdate will write the .update_flag and restart or exit
+                } catch (updateErr) {
+                    const failMsg = t('update.auto_update_failed', { error: updateErr.message }) ||
+                                    `❌ <b>[Mise à jour auto]</b> Échec de la mise à jour : ${updateErr.message}`;
+                    for (const chatId of chatIds) {
+                        await bot.telegram.sendMessage(chatId, failMsg, { parse_mode: 'HTML' }).catch(() => {});
+                    }
                 }
             }
         } catch(e) {

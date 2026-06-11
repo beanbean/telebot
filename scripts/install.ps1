@@ -80,22 +80,33 @@ function Setup-Env {
     Write-Host "[✓] .env configured" -ForegroundColor Green
 }
 
-# ---- Create Start Menu shortcut ----
+# ---- Create Start Menu shortcuts ----
 function Create-Shortcut {
     $shortcutDir = [System.IO.Path]::Combine($env:APPDATA, "Microsoft", "Windows", "Start Menu", "Programs")
-    $shortcutPath = Join-Path $shortcutDir "Antigravity Bot.lnk"
+    $startShortcutPath = Join-Path $shortcutDir "Start Antigravity Bot.lnk"
+    $stopShortcutPath = Join-Path $shortcutDir "Stop Antigravity Bot.lnk"
 
     try {
         $shell = New-Object -ComObject WScript.Shell
-        $shortcut = $shell.CreateShortcut($shortcutPath)
-        $shortcut.TargetPath = "cmd.exe"
-        $shortcut.Arguments = "/k cd /d `"$ProjectDir`" && npm start"
-        $shortcut.WorkingDirectory = $ProjectDir
-        $shortcut.Description = "Antigravity Telegram Bot"
-        $shortcut.Save()
-        Write-Host "[✓] Start Menu shortcut created" -ForegroundColor Green
+        
+        # Start Shortcut (Invisible in background)
+        $startShortcut = $shell.CreateShortcut($startShortcutPath)
+        $startShortcut.TargetPath = "powershell.exe"
+        $startShortcut.Arguments = "-NoProfile -WindowStyle Hidden -Command `"Start-Process node -ArgumentList 'src/watchdog.js' -WindowStyle Hidden -WorkingDirectory '$ProjectDir'`""
+        $startShortcut.WorkingDirectory = $ProjectDir
+        $startShortcut.Description = "Start Antigravity Bot in Background"
+        $startShortcut.Save()
+
+        # Stop Shortcut
+        $stopShortcut = $shell.CreateShortcut($stopShortcutPath)
+        $stopShortcut.TargetPath = Join-Path $ProjectDir "stop_bot.bat"
+        $stopShortcut.WorkingDirectory = $ProjectDir
+        $stopShortcut.Description = "Stop Background Antigravity Bot"
+        $stopShortcut.Save()
+
+        Write-Host "[✓] Start Menu shortcuts created (Start & Stop)" -ForegroundColor Green
     } catch {
-        Write-Host "[!] Could not create shortcut: $_" -ForegroundColor Yellow
+        Write-Host "[!] Could not create shortcuts: $_" -ForegroundColor Yellow
     }
 }
 

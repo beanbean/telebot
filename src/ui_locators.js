@@ -40,6 +40,12 @@ const UI_LOCATORS_SCRIPT = `
                 }
             }
 
+            // --- Fallback for Standalone Agent ---
+            if (!AG_UI.isClassicIDE()) {
+                const standaloneContainer = document.querySelector('.theme-standalone') || document.getElementById('root') || document.body;
+                if (standaloneContainer) return standaloneContainer;
+            }
+
             // --- Fallback: query all candidate containers and pick the first visible one ---
             const candidates = [
                 '#conversation', 
@@ -81,6 +87,9 @@ const UI_LOCATORS_SCRIPT = `
                 '.chat-input [contenteditable="true"]',
                 '[aria-label*="chat input" i] textarea',
                 '[aria-label*="chat input" i] [contenteditable="true"]',
+                '[aria-label*="message input" i] textarea',
+                '[aria-label*="message input" i] [contenteditable="true"]',
+                '[aria-label*="message input" i]',
                 '[placeholder*="Ask" i] textarea',
                 '[placeholder*="Ask" i] [contenteditable="true"]',
                 '[placeholder*="Sohbet" i] textarea',

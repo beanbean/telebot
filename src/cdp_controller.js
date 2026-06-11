@@ -67,8 +67,18 @@ function findConversationIdByTitle(threadName) {
             })
             .sort((a, b) => b.mtime - a.mtime);
 
+        const unescapeHtml = (str) => {
+            return (str || '')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&#x27;/g, "'");
+        };
         const normalize = (s) => (s || '').toLowerCase().replace(/[-_]/g, ' ').trim();
-        const searchName = normalize(threadName);
+        const searchName = normalize(unescapeHtml(threadName));
+
         // For short search names, require stricter match
         const minMatchLen = Math.min(15, searchName.length);
 
@@ -1682,12 +1692,65 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                             }
                         }
                         let workspace = null;
-                        const wsEl = document.querySelector('div.text-sm.font-medium.truncate');
-                        if (wsEl) {
-                            workspace = wsEl.textContent.trim();
+                        const panel = document.querySelector(".antigravity-agent-side-panel");
+                        const wsEl2 = panel ? panel.querySelector("div.text-lg.font-medium") : null;
+                        if (wsEl2) {
+                            workspace = wsEl2.textContent.trim();
                         } else {
-                            workspace = document.title;
+                            let resolvedWs = null;
+                            let activeEl = null;
+                            try {
+                                const url = window.location.href;
+                                const uuidMatch = url.match(/\\/c\\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+
+                                const activeUuid = uuidMatch ? uuidMatch[1] : null;
+
+                                
+                                if (activeUuid) {
+                                    activeEl = document.querySelector('[data-testid*="' + activeUuid + '"]') || 
+                                               Array.from(document.querySelectorAll('div[role="button"]')).find(el => {
+                                                   const tid = el.getAttribute('data-testid') || '';
+                                                   return tid.indexOf(activeUuid) !== -1;
+                                               });
+                                }
+
+                                if (!activeEl) {
+                                    activeEl = document.querySelector('.bg-sidebar-secondary');
+                                }
+                                
+                                if (activeEl) {
+                                    let current = activeEl;
+                                    let steps = 0;
+                                    while (current && steps < 15) {
+                                        if (current.className && typeof current.className === 'string' && current.className.includes('group/section')) {
+                                            const card = current.querySelector('[data-project-card="true"]');
+                                            if (card) {
+                                                resolvedWs = card.textContent.trim().replace(/\s+\d+$/, '');
+                                                break;
+                                            }
+                                        }
+                                        current = current.parentElement;
+                                        steps++;
+                                    }
+                                }
+                            } catch (err) {}
+                            
+                            if (resolvedWs) {
+                                workspace = resolvedWs;
+                            } else if (activeEl) {
+                                workspace = null;
+                            } else {
+                                // Fallback to older / other UI structures
+                                const wsEl = document.querySelector('div.text-sm.font-medium.truncate');
+                                if (wsEl) {
+                                    workspace = wsEl.textContent.trim();
+                                } else {
+                                    workspace = document.title;
+                                }
+                            }
                         }
+
+
 
                         // Try to find active conversation ID via DOM
                         let threadIdVal = null;
@@ -1709,7 +1772,6 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                 returnByValue: true
             }), 3000, "Evaluate timeout");
             await client.close();
-            
             if (res.result?.value) {
                 if (res.result.value.name && !threadName) threadName = res.result.value.name;
                 if (res.result.value.threadId && !threadId) threadId = res.result.value.threadId;
@@ -1725,7 +1787,7 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                 if (threadId) break;
                 if (threadName && res.result.value.nameSource !== 'document-title') break;
             }
-        } catch(e) { console.debug(`[getActiveThreadInfo] target error: ${e.message}`); }
+        } catch(e) { console.log(`[getActiveThreadInfo] target error: ${e.message}`); }
     }
 
     if (!threadId && threadName) {
@@ -1785,7 +1847,7 @@ async function getActiveThreadInfo(port, specificTargetId = null) {
                     }
                 }
             }
-        } catch(e) { console.debug(`[getActiveThreadInfo] fallback error: ${e.message}`); }
+        } catch(e) { console.log(`[getActiveThreadInfo] fallback error: ${e.message}`); }
     }
 
     if (threadId || workspaceName) {

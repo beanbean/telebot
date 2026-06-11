@@ -1390,14 +1390,25 @@ const handleModel = async (ctx) => {
         }
         return;
     }
-    const models = [
-        'Gemini 3.1 Pro (High)',
-        'Gemini 3.5 Flash (High)',
-        'Gemini 3.1 Pro (Low)',
-        'Claude Sonnet 4.6 (Thinking)',
-        'Claude Opus 4.6 (Thinking)',
-        'GPT-OSS 120B (Medium)'
-    ];
+    let models = [];
+    try {
+        models = await getAvailableModels(CDP_PORT);
+    } catch (e) {
+        console.error('Failed to get dynamic models:', e.message);
+    }
+
+    if (!models || models.length === 0) {
+        models = [
+            'Gemini 3.5 Flash (Medium)',
+            'Gemini 3.5 Flash (High)',
+            'Gemini 3.5 Flash (Low)',
+            'Gemini 3.1 Pro (High)',
+            'Gemini 3.1 Pro (Low)',
+            'Claude Sonnet 4.6 (Thinking)',
+            'Claude Opus 4.6 (Thinking)',
+            'GPT-OSS 120B (Medium)'
+        ];
+    }
     
     const buttons = models.map(m => {
         const cbData = 'md_' + Buffer.from(m).toString('base64').slice(0, 58);
@@ -2956,6 +2967,21 @@ async function init() {
 }
 
 init();
+
+// --- Start Heartbeat for Watchdog Agent ---
+const HEARTBEAT_FILE = path.join(__dirname, '..', '.heartbeat');
+function startHeartbeat() {
+    const updateHeartbeat = () => {
+        try {
+            fs.writeFileSync(HEARTBEAT_FILE, Date.now().toString(), 'utf8');
+        } catch (e) {
+            console.error('[heartbeat] Failed to write heartbeat:', e.message);
+        }
+    };
+    updateHeartbeat();
+    setInterval(updateHeartbeat, 30000); // update every 30 seconds
+}
+startHeartbeat();
 
 // Enable graceful stop
 const handleExit = async (signal) => {

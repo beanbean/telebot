@@ -39,7 +39,8 @@
     "window_close_failed": "❌ Pencere kapatılamadı. Açık pencere yok mu?",
     "closed": "✅ IDE tamamen kapatıldı! (Tüm process ve lock dosyaları temizlendi)",
     "not_installed": "❌ Antigravity IDE bulunamadı. Lütfen önce yükleyin.\nBkz: https://antigravity.google/",
-    "init_error": "❌ Başlatma hatası: {error}"
+    "init_error": "❌ Başlatma hatası: {error}",
+    "already_running_short": "Antigravity IDE zaten çalışıyor (PID: {pid})"
   },
   "status": {
     "title": "📊 <b>Sistem Durumu:</b>\n",
@@ -175,7 +176,8 @@
     "goal_desc": "Ajanın otonom hedef belirle",
     "plan_desc": "Uygulama planı oluştur",
     "schedule_task_desc": "IDE'de görev zamanla",
-    "browser_desc": "IDE'de tarayıcı aç"
+    "browser_desc": "IDE'de tarayıcı aç",
+    "model_not_selected": "⚠️ Model seçilmedi"
   },
   "photo": {
     "downloaded": "✅ Dosya indirildi ve ajana yönlendiriliyor...",
@@ -228,7 +230,8 @@
     "cleared_toast": "Temizlendi — otomatik seçim devrede",
     "cleared_msg": "🔄 Pencere tercihi temizlendi. Bot aktif IDE penceresini otomatik algılayacak.",
     "expired": "Pencere listesi süresi doldu. Tekrar /window gönderin.",
-    "selected_msg": "✅ Yeni hedef: <b>{{title}}</b>\n\nTüm komutlar artık bu pencereye gönderilecek."
+    "selected_msg": "✅ Yeni hedef: <b>{{title}}</b>\n\nTüm komutlar artık bu pencereye gönderilecek.",
+    "selected_toast": "Seçili Pencere: {title}"
   },
   "agents": {
     "list_title": "📂 <b>Son Sohbetler:</b>\n\n",
@@ -237,7 +240,8 @@
     "invalid_number": "❌ Geçersiz sohbet numarası.",
     "no_recent": "ℹ️ Son aktif sohbet bulunamadı.",
     "error": "❌ Hata: {error}",
-    "switched_plain": "✅ Sohbet değiştirildi: {name}"
+    "switched_plain": "✅ Sohbet değiştirildi: {name}",
+    "window_not_found": "Agent penceresi bulunamadı"
   },
   "artifacts": {
     "list_title": "📎 <b>Mevcut Sohbetin Artifact'leri:</b>\n\n",
@@ -319,7 +323,8 @@
     "start_error": "❌ Process could not be started: {error}",
     "updated_header": "Kısayollar güncellendi:\n",
     "binary_not_found": "binary bulunamadı",
-    "updated": "Kısayollar güncellendi:\n"
+    "updated": "Kısayollar güncellendi:\n",
+    "unsupported_platform": "Kısayollar sadece macOS üzerinde desteklenmektedir."
   },
   "update": {
     "checking": "🔍 Checking for updates...",
@@ -334,7 +339,9 @@
     "new_version_info": "Yeni: v{version} ({commit})\n",
     "changelog": "📝 <b>Changelog:</b> <i>{message}</i>\n\n",
     "update_note": "<i>💡 Not: Antigravity 2.0 (Standalone App) desteklenir, fakat Antigravity IDE önerilir.</i>\n\n",
-    "updating": "Güncelleniyor..."
+    "updating": "Güncelleniyor...",
+    "auto_updating": "🔄 <b>[Otomatik Güncelleme]</b> Geliştirici güncellemesi algılandı (v{version} - {commit}).\\nDeğişiklikler birleştiriliyor ve güncelleniyor...",
+    "auto_update_failed": "❌ <b>[Otomatik Güncelleme]</b> Güncelleme başarısız oldu: {error}"
   },
   "error": {
     "start_error": "❌ Başlatma hatası: {error}",
@@ -365,39 +372,39 @@
     "proactive_msg": "Ajan proaktif bir bildirim gönderdi:"
   },
   "schedule": {
-    "not_configured": "⚠️ CronCrew henüz yapılandırılmamış.\n\nKurulum: /schedule_setup <sunucu_url> <lisans_anahtarı>\nÖrnek: /schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX",
-    "setup_usage": "⚙️ Kullanım: /schedule_setup <sunucu_url> <lisans_anahtarı>\n\nÖrnek:\n<code>/schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX</code>",
-    "setup_success": "✅ CronCrew bağlantısı kuruldu!\n\n🎫 Tier: <b>{tier}</b>\n📡 Sunucu: <code>{url}</code>\n\n/schedule_list ile schedule'larınızı yönetebilirsiniz.",
+    "not_configured": "⚠️ CronCrew henüz yapılandırılmadı.\\n\\nKurulum: /schedule_setup <sunucu_url> <lisans_anahtari>\\nÖrnek: /schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX",
+    "setup_usage": "⚙️ Kullanım: /schedule_setup <sunucu_url> <lisans_anahtari>\\n\\nÖrnek:\\n<code>/schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX</code>",
+    "setup_success": "✅ CronCrew bağlandı!\\n\\n🎫 Seviye: <b>{tier}</b>\\n📡 Sunucu: <code>{url}</code>\\n\\nZamanlamalarınızı yönetmek için /schedule_list kullanın.",
     "setup_error": "❌ Bağlantı hatası: {error}",
-    "status_title": "📊 <b>CronCrew Durumu</b>\n\n",
-    "status_tier": "🎫 Tier: <b>{tier}</b>\n",
-    "status_license": "📋 Durum: <b>{status}</b>\n",
-    "status_usage": "📈 Bugün: {today} çalıştırma\n",
-    "status_schedules": "📅 Aktif Schedule: {count}\n",
-    "status_changes": "🔄 Cihaz Değişikliği: {used}/{max}\n",
-    "status_expires": "⏰ Bitiş: {date}\n",
-    "list_title": "📅 <b>Schedule Listesi:</b>\n\n",
-    "list_empty": "ℹ️ Henüz schedule oluşturulmamış.\n\n/schedule_add ile yeni schedule ekleyebilirsiniz.",
-    "list_item": "{icon} <b>{name}</b>\n   ⏰ <code>{cron}</code> → {workspace}\n   📊 {runCount}x çalıştı | Son: {lastResult}\n",
-    "add_usage": "➕ Yeni schedule ekle:\n\n<code>/schedule_add İsim | cron_ifadesi | workspace | prompt</code>\n\nÖrnek:\n<code>/schedule_add Günlük Test | 0 9 * * * | antigravity-bot | Tüm testleri çalıştır</code>",
-    "add_success": "✅ Schedule oluşturuldu!\n\n📝 <b>{name}</b>\n⏰ <code>{cron}</code>\n📁 {workspace}\n🤖 {model}",
+    "status_title": "📊 <b>CronCrew Durumu</b>\\n\\n",
+    "status_tier": "🎫 Seviye: <b>{tier}</b>\\n",
+    "status_license": "📋 Durum: <b>{status}</b>\\n",
+    "status_usage": "📈 Bugün: {today} yürütme\\n",
+    "status_schedules": "📅 Aktif Zamanlamalar: {count}\\n",
+    "status_changes": "🔄 Cihaz Değişimleri: {used}/{max}\\n",
+    "status_expires": "⏰ Bitiş: {date}\\n",
+    "list_title": "📅 <b>Zamanlama Listesi:</b>\\n\\n",
+    "list_empty": "ℹ️ Henüz hiç zamanlama oluşturulmadı.\\n\\nYeni bir zamanlama oluşturmak için /schedule_add kullanın.",
+    "list_item": "{icon} <b>{name}</b>\\n   ⏰ <code>{cron}</code> → {workspace}\\n   📊 Çalışma: {runCount}x | Son: {lastResult}\\n",
+    "add_usage": "➕ Yeni zamanlama ekle:\\n\\n<code>/schedule_add İsim | cron_ifadesi | çalışma_alanı | istem</code>\\n\\nÖrnek:\\n<code>/schedule_add Günlük Test | 0 9 * * * | antigravity-bot | Tüm testleri çalıştır</code>",
+    "add_success": "✅ Zamanlama oluşturuldu!\\n\\n📝 <b>{name}</b>\\n⏰ <code>{cron}</code>\\n📁 {workspace}\\n🤖 {model}",
     "add_error": "❌ Oluşturma hatası: {error}",
-    "delete_usage": "🗑️ Schedule sil:\n\n<code>/schedule_del <schedule_id></code>",
-    "delete_success": "✅ Schedule silindi.",
+    "delete_usage": "🗑️ Zamanlamayı sil:\\n\\n<code>/schedule_del <zamanlama_id></code>",
+    "delete_success": "✅ Zamanlama silindi.",
     "delete_error": "❌ Silme hatası: {error}",
-    "pause_success": "⏸️ Schedule duraklatıldı: <b>{name}</b>",
-    "resume_success": "▶️ Schedule devam ettirildi: <b>{name}</b>",
-    "run_success": "🚀 Schedule çalıştırıldı!\n\n📁 Workspace: <b>{workspace}</b>\n🤖 Model: {model}\n📝 Prompt gönderildi.",
+    "pause_success": "⏸️ Zamanlama duraklatıldı: <b>{name}</b>",
+    "resume_success": "▶️ Zamanlama devam ettirildi: <b>{name}</b>",
+    "run_success": "🚀 Zamanlama çalıştırıldı!\\n\\n📁 Çalışma Alanı: <b>{workspace}</b>\\n🤖 Model: {model}\\n📝 İstem gönderildi.",
     "run_error": "❌ Çalıştırma hatası: {error}",
     "error": "❌ Hata: {error}",
     "btn_pause": "⏸️ Duraklat",
-    "btn_resume": "▶️ Devam",
+    "btn_resume": "▶️ Devam Et",
     "btn_delete": "🗑️ Sil",
     "btn_run": "▶️ Şimdi Çalıştır",
     "btn_back": "◀️ Listeye Dön",
-    "menu_schedule_setup_desc": "CronCrew sunucu bağlantısını kur",
+    "menu_schedule_setup_desc": "CronCrew bağlantısını kur",
     "menu_schedule_list_desc": "Zamanlanmış görevleri listele",
-    "menu_schedule_add_desc": "Yeni zamanlanmış görev ekle",
+    "menu_schedule_add_desc": "Yeni bir zamanlanmış görev ekle",
     "menu_schedule_status_desc": "CronCrew durumunu göster"
   }
 }

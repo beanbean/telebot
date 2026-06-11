@@ -51,3 +51,9 @@ antigravity-bot-pro/
 
 # CronCrew schedule client (not ready for production)
 src/schedule_client.js
+
+# Local temp and scratch files
+.heartbeat
+node_version.txt
+scratch/
+

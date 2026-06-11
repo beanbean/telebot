@@ -39,7 +39,8 @@
     "window_close_failed": "❌ Échec de la fermeture. Y a-t-il une fenêtre ouverte ?",
     "closed": "✅ L'IDE a été complètement fermé ! (Tous les processus et fichiers lock nettoyés)",
     "not_installed": "❌ Antigravity IDE introuvable. Veuillez l'installer d'abord.\nVoir : https://antigravity.google/",
-    "init_error": "❌ Erreur d'initialisation : {error}"
+    "init_error": "❌ Erreur d'initialisation : {error}",
+    "already_running_short": "L'IDE Antigravity est déjà en cours d'exécution (PID: {pid})"
   },
   "status": {
     "title": "📊 <b>Statut du système :</b>\n",
@@ -175,7 +176,8 @@
     "goal_desc": "Définir un objectif autonome pour l'agent",
     "plan_desc": "Générer un plan d'implémentation",
     "schedule_task_desc": "Planifier une tâche dans l'IDE",
-    "browser_desc": "Ouvrir le navigateur dans l'IDE"
+    "browser_desc": "Ouvrir le navigateur dans l'IDE",
+    "model_not_selected": "⚠️ Aucun modèle sélectionné"
   },
   "photo": {
     "downloaded": "✅ Fichier téléchargé et transmission à l'agent en cours...",
@@ -228,7 +230,8 @@
     "cleared_toast": "Effacé — utilisation de l'auto-détection",
     "cleared_msg": "🔄 Préférence de fenêtre supprimée. Le bot détectera automatiquement la fenêtre IDE active.",
     "expired": "La liste des fenêtres a expiré. Envoyez /window à nouveau.",
-    "selected_msg": "✅ Focalisé sur : <b>{{title}}</b>\n\nToutes les commandes seront redirigées vers cette fenêtre."
+    "selected_msg": "✅ Focalisé sur : <b>{{title}}</b>\n\nToutes les commandes seront redirigées vers cette fenêtre.",
+    "selected_toast": "Fenêtre sélectionnée : {title}"
   },
   "agents": {
     "list_title": "📂 <b>Fils de discussion récents :</b>\n\n",
@@ -237,7 +240,8 @@
     "invalid_number": "❌ Numéro de fil invalide.",
     "no_recent": "ℹ️ Aucun fil actif récent trouvé.",
     "error": "❌ Erreur : {error}",
-    "switched_plain": "✅ Basculé vers le fil : {name}"
+    "switched_plain": "✅ Basculé vers le fil : {name}",
+    "window_not_found": "Fenêtre d'agent introuvable"
   },
   "artifacts": {
     "list_title": "📎 <b>Artefacts du fil actuel :</b>\n\n",
@@ -319,7 +323,8 @@
     "start_error": "❌ Le processus n'a pas pu démarrer : {error}",
     "updated_header": "Raccourcis mis à jour :\n",
     "binary_not_found": "binaire introuvable",
-    "updated": "Raccourcis mis à jour :\n"
+    "updated": "Raccourcis mis à jour :\n",
+    "unsupported_platform": "Les raccourcis ne sont pris en charge que sur macOS."
   },
   "update": {
     "checking": "🔍 Recherche de mises à jour...",
@@ -334,7 +339,9 @@
     "new_version_info": "Nouvelle : v{version} ({commit})\n",
     "changelog": "📝 <b>Changelog :</b> <i>{message}</i>\n\n",
     "update_note": "<i>💡 Note : Antigravity 2.0 (Standalone) est pris en charge, mais l'IDE est recommandé.</i>\n\n",
-    "updating": "Mise à jour..."
+    "updating": "Mise à jour...",
+    "auto_updating": "🔄 <b>[Mise à jour auto]</b> Mise à jour du développeur détectée (v{version} - {commit}).\\nFusion des changements et mise à jour en cours...",
+    "auto_update_failed": "❌ <b>[Mise à jour auto]</b> Échec de la mise à jour : {error}"
   },
   "error": {
     "start_error": "❌ Erreur de démarrage : {error}",
@@ -363,5 +370,41 @@
   },
   "task_watcher": {
     "proactive_msg": "L'agent a envoyé une notification proactive :"
+  },
+  "schedule": {
+    "not_configured": "⚠️ CronCrew n’est pas encore configuré.\\n\\nInstallation : /schedule_setup <url_serveur> <clé_licence>\\nExemple : /schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX",
+    "setup_usage": "⚙️ Utilisation : /schedule_setup <url_serveur> <clé_licence>\\n\\nExemple :\\n<code>/schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX</code>",
+    "setup_success": "✅ CronCrew connecté !\\n\\n🎫 Niveau : <b>{tier}</b>\\n📡 Serveur : <code>{url}</code>\\n\\nUtilisez /schedule_list pour gérer vos planifications.",
+    "setup_error": "❌ Erreur de connexion : {error}",
+    "status_title": "📊 <b>Statut de CronCrew</b>\\n\\n",
+    "status_tier": "🎫 Niveau : <b>{tier}</b>\\n",
+    "status_license": "📋 Statut : <b>{status}</b>\\n",
+    "status_usage": "📈 Aujourd’hui : {today} exécutions\\n",
+    "status_schedules": "📅 Planifications actives : {count}\\n",
+    "status_changes": "🔄 Changements d’appareil : {used}/{max}\\n",
+    "status_expires": "⏰ Expire : {date}\\n",
+    "list_title": "📅 <b>Liste des planifications :</b>\\n\\n",
+    "list_empty": "ℹ️ Aucune planification créée pour le moment.\\n\\nUtilisez /schedule_add pour créer une nouvelle planification.",
+    "list_item": "{icon} <b>{name}</b>\\n   ⏰ <code>{cron}</code> → {workspace}\\n   📊 Exécuté : {runCount}x | Dernier : {lastResult}\\n",
+    "add_usage": "➕ Ajouter une nouvelle planification :\\n\\n<code>/schedule_add Nom | expression_cron | espace_de_travail | prompt</code>\\n\\nExemple :\\n<code>/schedule_add Test quotidien | 0 9 * * * | antigravity-bot | Exécuter tous les tests</code>",
+    "add_success": "✅ Planification créée !\\n\\n📝 <b>{name}</b>\\n⏰ <code>{cron}</code>\\n📁 {workspace}\\n🤖 {model}",
+    "add_error": "❌ Erreur de création : {error}",
+    "delete_usage": "🗑️ Supprimer une planification :\\n\\n<code>/schedule_del <id_planification></code>",
+    "delete_success": "✅ Planification supprimée.",
+    "delete_error": "❌ Erreur de suppression : {error}",
+    "pause_success": "⏸️ Planification en pause : <b>{name}</b>",
+    "resume_success": "▶️ Planification reprise : <b>{name}</b>",
+    "run_success": "🚀 Planification exécutée !\\n\\n📁 Espace de travail : <b>{workspace}</b>\\n🤖 Modèle : {model}\\n📝 Invite envoyée.",
+    "run_error": "❌ Erreur d’exécution : {error}",
+    "error": "❌ Erreur : {error}",
+    "btn_pause": "⏸️ Pause",
+    "btn_resume": "▶️ Reprendre",
+    "btn_delete": "🗑️ Supprimer",
+    "btn_run": "▶️ Exécuter",
+    "btn_back": "◀️ Retour à la liste",
+    "menu_schedule_setup_desc": "Configurer la connexion CronCrew",
+    "menu_schedule_list_desc": "Lister les tâches planifiées",
+    "menu_schedule_add_desc": "Ajouter une nouvelle tâche planifiée",
+    "menu_schedule_status_desc": "Afficher le statut de CronCrew"
   }
 }

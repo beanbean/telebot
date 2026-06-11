@@ -39,7 +39,8 @@
     "window_close_failed": "❌ Error al cerrar la ventana. ¿Hay alguna ventana abierta?",
     "closed": "✅ ¡IDE cerrado por completo! (Procesos y archivos de bloqueo limpiados)",
     "not_installed": "❌ No se encontró Antigravity IDE. Por favor instálalo primero.\nVer: https://antigravity.google/",
-    "init_error": "❌ Error de inicialización: {error}"
+    "init_error": "❌ Error de inicialización: {error}",
+    "already_running_short": "El IDE de Antigravity ya se está ejecutando (PID: {pid})"
   },
   "status": {
     "title": "📊 <b>Estado del Sistema:</b>\n",
@@ -175,7 +176,8 @@
     "goal_desc": "Establecer objetivo autónomo para el agente",
     "plan_desc": "Generar plan de implementación",
     "schedule_task_desc": "Programar tarea en el IDE",
-    "browser_desc": "Abrir navegador en el IDE"
+    "browser_desc": "Abrir navegador en el IDE",
+    "model_not_selected": "⚠️ Ningún modelo seleccionado"
   },
   "photo": {
     "downloaded": "✅ Archivo descargado y enviando al agente...",
@@ -228,7 +230,8 @@
     "cleared_toast": "Limpiado — usando auto-detección",
     "cleared_msg": "🔄 Preferencia de ventana eliminada. El bot detectará automáticamente la ventana IDE activa.",
     "expired": "La lista de ventanas ha expirado. Envía /window de nuevo.",
-    "selected_msg": "✅ Apuntando a: <b>{{title}}</b>\n\nTodos los comandos se dirigirán a esta ventana."
+    "selected_msg": "✅ Apuntando a: <b>{{title}}</b>\n\nTodos los comandos se dirigirán a esta ventana.",
+    "selected_toast": "Ventana seleccionada: {title}"
   },
   "agents": {
     "list_title": "📂 <b>Chats recientes:</b>\n\n",
@@ -237,7 +240,8 @@
     "invalid_number": "❌ Número de chat inválido.",
     "no_recent": "ℹ️ No se encontraron hilos activos recientemente.",
     "error": "❌ Error: {error}",
-    "switched_plain": "✅ Cambiado al hilo: {name}"
+    "switched_plain": "✅ Cambiado al hilo: {name}",
+    "window_not_found": "Ventana de agente no encontrada"
   },
   "artifacts": {
     "list_title": "📎 <b>Artefactos del chat actual:</b>\n\n",
@@ -319,7 +323,8 @@
     "start_error": "❌ El proceso no pudo iniciarse: {error}",
     "updated_header": "Accesos directos actualizados:\n",
     "binary_not_found": "binario no encontrado",
-    "updated": "Accesos directos actualizados:\n"
+    "updated": "Accesos directos actualizados:\n",
+    "unsupported_platform": "Los atajos solo son compatibles con macOS."
   },
   "update": {
     "checking": "🔍 Buscando actualizaciones...",
@@ -334,7 +339,9 @@
     "new_version_info": "Nueva: v{version} ({commit})\n",
     "changelog": "📝 <b>Changelog:</b> <i>{message}</i>\n\n",
     "update_note": "<i>💡 Nota: Se soporta Antigravity 2.0 (Standalone), pero se recomienda Antigravity IDE.</i>\n\n",
-    "updating": "Actualizando..."
+    "updating": "Actualizando...",
+    "auto_updating": "🔄 <b>[Actualización automática]</b> Actualización del desarrollador detectada (v{version} - {commit}).\\nFusionando cambios y actualizando...",
+    "auto_update_failed": "❌ <b>[Actualización automática]</b> Error al actualizar: {error}"
   },
   "error": {
     "start_error": "❌ Error al iniciar: {error}",
@@ -363,5 +370,41 @@
   },
   "task_watcher": {
     "proactive_msg": "El agente envió una notificación proactiva:"
+  },
+  "schedule": {
+    "not_configured": "⚠️ CronCrew aún no está configurado.\\n\\nConfiguración: /schedule_setup <url_servidor> <clave_licencia>\\nEjemplo: /schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX",
+    "setup_usage": "⚙️ Uso: /schedule_setup <url_servidor> <clave_licencia>\\n\\nEjemplo:\\n<code>/schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX</code>",
+    "setup_success": "✅ ¡CronCrew conectado!\\n\\n🎫 Nivel: <b>{tier}</b>\\n📡 Servidor: <code>{url}</code>\\n\\nUsa /schedule_list para gestionar tus horarios.",
+    "setup_error": "❌ Error de conexión: {error}",
+    "status_title": "📊 <b>Estado de CronCrew</b>\\n\\n",
+    "status_tier": "🎫 Nivel: <b>{tier}</b>\\n",
+    "status_license": "📋 Estado: <b>{status}</b>\\n",
+    "status_usage": "📈 Hoy: {today} ejecuciones\\n",
+    "status_schedules": "📅 Horarios activos: {count}\\n",
+    "status_changes": "🔄 Cambios de dispositivo: {used}/{max}\\n",
+    "status_expires": "⏰ Caduca: {date}\\n",
+    "list_title": "📅 <b>Lista de horarios:</b>\\n\\n",
+    "list_empty": "ℹ️ Aún no hay horarios creados.\\n\\nUsa /schedule_add para crear un nuevo horario.",
+    "list_item": "{icon} <b>{name}</b>\\n   ⏰ <code>{cron}</code> → {workspace}\\n   📊 Ejecutado: {runCount}x | Último: {lastResult}\\n",
+    "add_usage": "➕ Agregar un nuevo horario:\\n\\n<code>/schedule_add Nombre | expresion_cron | espacio_de_trabajo | prompt</code>\\n\\nEjemplo:\\n<code>/schedule_add Prueba diaria | 0 9 * * * | antigravity-bot | Ejecutar todas las pruebas</code>",
+    "add_success": "✅ ¡Horario creado!\\n\\n📝 <b>{name}</b>\\n⏰ <code>{cron}</code>\\n📁 {workspace}\\n🤖 {model}",
+    "add_error": "❌ Error de creación: {error}",
+    "delete_usage": "🗑️ Eliminar un horario:\\n\\n<code>/schedule_del <id_horario></code>",
+    "delete_success": "✅ Horario eliminado.",
+    "delete_error": "❌ Error de eliminación: {error}",
+    "pause_success": "⏸️ Horario pausado: <b>{name}</b>",
+    "resume_success": "▶️ Horario reanudado: <b>{name}</b>",
+    "run_success": "🚀 ¡Horario ejecutado!\\n\\n📁 Espacio de trabajo: <b>{workspace}</b>\\n🤖 Modelo: {model}\\n📝 Prompt enviado.",
+    "run_error": "❌ Error de ejecución: {error}",
+    "error": "❌ Error: {error}",
+    "btn_pause": "⏸️ Pausar",
+    "btn_resume": "▶️ Reanudar",
+    "btn_delete": "🗑️ Eliminar",
+    "btn_run": "▶️ Ejecutar ahora",
+    "btn_back": "◀️ Volver a la lista",
+    "menu_schedule_setup_desc": "Configurar conexión CronCrew",
+    "menu_schedule_list_desc": "Listar tareas programadas",
+    "menu_schedule_add_desc": "Agregar nueva tarea programada",
+    "menu_schedule_status_desc": "Mostrar el estado de CronCrew"
   }
 }

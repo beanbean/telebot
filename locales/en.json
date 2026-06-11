@@ -39,7 +39,8 @@
     "window_close_failed": "❌ Failed to close window. Is there an open window?",
     "closed": "✅ IDE fully closed! (All processes and lock files cleaned)",
     "not_installed": "❌ Antigravity IDE not found. Please install it first.\nSee: https://antigravity.google/",
-    "init_error": "❌ Initialization error: {error}"
+    "init_error": "❌ Initialization error: {error}",
+    "already_running_short": "Antigravity IDE is already running (PID: {pid})"
   },
   "status": {
     "title": "📊 <b>System Status:</b>\n",
@@ -175,7 +176,8 @@
     "goal_desc": "Set autonomous goal for agent",
     "plan_desc": "Generate implementation plan",
     "schedule_task_desc": "Schedule a task in IDE",
-    "browser_desc": "Launch browser in IDE"
+    "browser_desc": "Launch browser in IDE",
+    "model_not_selected": "⚠️ No model selected"
   },
   "photo": {
     "downloaded": "✅ File downloaded and forwarding to agent...",
@@ -228,7 +230,8 @@
     "cleared_toast": "Cleared — using auto-detect",
     "cleared_msg": "🔄 Window preference cleared. Bot will auto-detect the active IDE window.",
     "expired": "Window list expired. Send /window again.",
-    "selected_msg": "✅ Now targeting: <b>{{title}}</b>\n\nAll commands will route to this window."
+    "selected_msg": "✅ Now targeting: <b>{{title}}</b>\n\nAll commands will route to this window.",
+    "selected_toast": "Selected Window: {title}"
   },
   "agents": {
     "list_title": "📂 <b>Recent Chat Threads:</b>\n\n",
@@ -237,7 +240,8 @@
     "invalid_number": "❌ Invalid thread number.",
     "no_recent": "ℹ️ No recent active threads found.",
     "error": "❌ Error: {error}",
-    "switched_plain": "✅ Switched to thread: {name}"
+    "switched_plain": "✅ Switched to thread: {name}",
+    "window_not_found": "Agent window not found"
   },
   "artifacts": {
     "list_title": "📎 <b>Artifacts for Current Thread:</b>\n\n",
@@ -319,7 +323,8 @@
     "start_error": "❌ Process could not be started: {error}",
     "updated_header": "Shortcuts updated:\n",
     "binary_not_found": "binary not found",
-    "updated": "Shortcuts updated:\n"
+    "updated": "Shortcuts updated:\n",
+    "unsupported_platform": "Shortcuts are only supported on macOS."
   },
   "update": {
     "checking": "🔍 Checking for updates...",
@@ -334,7 +339,9 @@
     "new_version_info": "New: v{version} ({commit})\n",
     "changelog": "📝 <b>Changelog:</b> <i>{message}</i>\n\n",
     "update_note": "<i>💡 Note: Antigravity 2.0 (Standalone App) is supported, but Antigravity IDE is recommended.</i>\n\n",
-    "updating": "Updating..."
+    "updating": "Updating...",
+    "auto_updating": "🔄 <b>[Auto-Update]</b> Developer update detected (v{version} - {commit}).\\nMerging changes and updating...",
+    "auto_update_failed": "❌ <b>[Auto-Update]</b> Update failed: {error}"
   },
   "error": {
     "start_error": "❌ Start error: {error}",
@@ -365,29 +372,29 @@
     "proactive_msg": "The agent sent a proactive notification:"
   },
   "schedule": {
-    "not_configured": "⚠️ CronCrew is not configured yet.\n\nSetup: /schedule_setup <server_url> <license_key>\nExample: /schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX",
-    "setup_usage": "⚙️ Usage: /schedule_setup <server_url> <license_key>\n\nExample:\n<code>/schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX</code>",
-    "setup_success": "✅ CronCrew connected!\n\n🎫 Tier: <b>{tier}</b>\n📡 Server: <code>{url}</code>\n\nUse /schedule_list to manage your schedules.",
+    "not_configured": "⚠️ CronCrew is not configured yet.\\n\\nSetup: /schedule_setup <server_url> <license_key>\\nExample: /schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX",
+    "setup_usage": "⚙️ Usage: /schedule_setup <server_url> <license_key>\\n\\nExample:\\n<code>/schedule_setup https://agp.emreturkmen.com CC-XXXX-XXXX-XXXX-XXXX</code>",
+    "setup_success": "✅ CronCrew connected!\\n\\n🎫 Tier: <b>{tier}</b>\\n📡 Server: <code>{url}</code>\\n\\nUse /schedule_list to manage your schedules.",
     "setup_error": "❌ Connection error: {error}",
-    "status_title": "📊 <b>CronCrew Status</b>\n\n",
-    "status_tier": "🎫 Tier: <b>{tier}</b>\n",
-    "status_license": "📋 Status: <b>{status}</b>\n",
-    "status_usage": "📈 Today: {today} executions\n",
-    "status_schedules": "📅 Active Schedules: {count}\n",
-    "status_changes": "🔄 Device Changes: {used}/{max}\n",
-    "status_expires": "⏰ Expires: {date}\n",
-    "list_title": "📅 <b>Schedule List:</b>\n\n",
-    "list_empty": "ℹ️ No schedules created yet.\n\nUse /schedule_add to create a new schedule.",
-    "list_item": "{icon} <b>{name}</b>\n   ⏰ <code>{cron}</code> → {workspace}\n   📊 Ran {runCount}x | Last: {lastResult}\n",
-    "add_usage": "➕ Add a new schedule:\n\n<code>/schedule_add Name | cron_expression | workspace | prompt</code>\n\nExample:\n<code>/schedule_add Daily Test | 0 9 * * * | antigravity-bot | Run all tests</code>",
-    "add_success": "✅ Schedule created!\n\n📝 <b>{name}</b>\n⏰ <code>{cron}</code>\n📁 {workspace}\n🤖 {model}",
+    "status_title": "📊 <b>CronCrew Status</b>\\n\\n",
+    "status_tier": "🎫 Tier: <b>{tier}</b>\\n",
+    "status_license": "📋 Status: <b>{status}</b>\\n",
+    "status_usage": "📈 Today: {today} executions\\n",
+    "status_schedules": "📅 Active Schedules: {count}\\n",
+    "status_changes": "🔄 Device Changes: {used}/{max}\\n",
+    "status_expires": "⏰ Expires: {date}\\n",
+    "list_title": "📅 <b>Schedule List:</b>\\n\\n",
+    "list_empty": "ℹ️ No schedules created yet.\\n\\nUse /schedule_add to create a new schedule.",
+    "list_item": "{icon} <b>{name}</b>\\n   ⏰ <code>{cron}</code> → {workspace}\\n   📊 Ran {runCount}x | Last: {lastResult}\\n",
+    "add_usage": "➕ Add a new schedule:\\n\\n<code>/schedule_add Name | cron_expression | workspace | prompt</code>\\n\\nExample:\\n<code>/schedule_add Daily Test | 0 9 * * * | antigravity-bot | Run all tests</code>",
+    "add_success": "✅ Schedule created!\\n\\n📝 <b>{name}</b>\\n⏰ <code>{cron}</code>\\n📁 {workspace}\\n🤖 {model}",
     "add_error": "❌ Creation error: {error}",
-    "delete_usage": "🗑️ Delete a schedule:\n\n<code>/schedule_del <schedule_id></code>",
+    "delete_usage": "🗑️ Delete a schedule:\\n\\n<code>/schedule_del <schedule_id></code>",
     "delete_success": "✅ Schedule deleted.",
     "delete_error": "❌ Deletion error: {error}",
     "pause_success": "⏸️ Schedule paused: <b>{name}</b>",
     "resume_success": "▶️ Schedule resumed: <b>{name}</b>",
-    "run_success": "🚀 Schedule executed!\n\n📁 Workspace: <b>{workspace}</b>\n🤖 Model: {model}\n📝 Prompt sent.",
+    "run_success": "🚀 Schedule executed!\\n\\n📁 Workspace: <b>{workspace}</b>\\n🤖 Model: {model}\\n📝 Prompt sent.",
     "run_error": "❌ Execution error: {error}",
     "error": "❌ Error: {error}",
     "btn_pause": "⏸️ Pause",
