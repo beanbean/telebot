@@ -59,7 +59,12 @@ node_version.txt
 scratch/
 
 # Databases
+# Databases
 *.db
 *.sqlite
 *.sqlite3
+
+# Profiling artifacts
+*.cpuprofile
+*.heapsnapshot
 
