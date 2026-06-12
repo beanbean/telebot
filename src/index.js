@@ -3041,7 +3041,7 @@ bot.on('voice', async (ctx) => {
             
             // Convert to WAV
             await new Promise((resolve, reject) => {
-                exec(`ffmpeg -i ${tmpOgg} -ar 16000 -ac 1 -c:a pcm_s16le ${tmpWav} -y`, (err) => {
+                exec(`/opt/homebrew/bin/ffmpeg -i ${tmpOgg} -ar 16000 -ac 1 -c:a pcm_s16le ${tmpWav} -y`, (err) => {
                     if (err) reject(err); else resolve();
                 });
             });
@@ -3053,7 +3053,7 @@ bot.on('voice', async (ctx) => {
             }
             
             const whisperResult = await new Promise((resolve, reject) => {
-                exec(`whisper-cpp -m ${modelPath} -f ${tmpWav} -l vi -nt`, (err, stdout) => {
+                exec(`/opt/homebrew/bin/whisper-cli -m ${modelPath} -f ${tmpWav} -l vi -nt`, (err, stdout) => {
                     if (err) reject(err); else resolve(stdout);
                 });
             });
