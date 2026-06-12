@@ -5,6 +5,7 @@ const path = require('path');
 const os = require('os');
 const { exec } = require('child_process');
 const { loadLocale, t, getLang } = require('./i18n');
+const axios = require('axios');
 const { config, isIDERunning, killIDE, cleanLockFile, launchIDE, trustWorkspaceViaCDP, PLATFORM } = require('./platform');
 const { isAgentWorking, getFullLatestResponse, snapshotChatState, captureAgentScreenshot, captureFullIDEScreenshot, waitForAgentResponse, sendViaCDP, triggerNewChat, triggerModelMenu, getAvailableModels, selectModel, getCurrentModel, stopAgent, getQuota, listWindows, setPreferredWindow, getPreferredWindow, getPreferredTargetId, getCachedWindows, closeWindow, listAgentThreads, switchAgentThread, getActiveThreadId, getActiveThreadInfo, setActiveWorkspace, switchStandaloneWorkspace, getLastResolvedThreadId, setOnThreadResolved } = require('./cdp_controller');
 const autoaccept = require('./autoaccept');
@@ -3013,6 +3014,92 @@ bot.on(['photo', 'document'], (ctx) => {
         } catch(err) {
             const errorMsg = err.message === 'no_chat_input' ? t('ask.no_chat_input') : err.message;
             ctx.reply(t('photo.error', { error: errorMsg })).catch(() => {});
+        }
+    })();
+});
+
+// ===== VOICE HANDLER (WHISPER.CPP) =====
+bot.on('voice', async (ctx) => {
+    (async () => {
+        try {
+            const msg = await ctx.reply('🎧 Đang tải và giải mã giọng nói (Local AI)...');
+            
+            const fileId = ctx.message.voice.file_id;
+            const link = await ctx.telegram.getFileLink(fileId);
+            
+            const tmpOgg = path.join(os.tmpdir(), `voice_${Date.now()}.ogg`);
+            const tmpWav = path.join(os.tmpdir(), `voice_${Date.now()}.wav`);
+            
+            // Download file
+            const response = await axios({ url: link.href, responseType: 'stream' });
+            const writer = fs.createWriteStream(tmpOgg);
+            response.data.pipe(writer);
+            await new Promise((resolve, reject) => {
+                writer.on('finish', resolve);
+                writer.on('error', reject);
+            });
+            
+            // Convert to WAV
+            await new Promise((resolve, reject) => {
+                exec(`ffmpeg -i ${tmpOgg} -ar 16000 -ac 1 -c:a pcm_s16le ${tmpWav} -y`, (err) => {
+                    if (err) reject(err); else resolve();
+                });
+            });
+            
+            // Run Whisper
+            const modelPath = path.join(__dirname, '..', 'models', 'ggml-base.bin');
+            if (!fs.existsSync(modelPath)) {
+                throw new Error("Whisper model not found at " + modelPath);
+            }
+            
+            const whisperResult = await new Promise((resolve, reject) => {
+                exec(`whisper-cpp -m ${modelPath} -f ${tmpWav} -l vi -nt`, (err, stdout) => {
+                    if (err) reject(err); else resolve(stdout);
+                });
+            });
+            
+            let text = whisperResult.trim();
+            // Fallback parsing if -nt doesn't work perfectly (remove timestamps)
+            text = text.replace(/\[\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}\]\s*/g, '').trim();
+            
+            if (!text) throw new Error("Could not transcribe voice.");
+            
+            await ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, undefined, `🎤 <b>Đã giải mã:</b>\n<i>${text}</i>`, { parse_mode: 'HTML' }).catch(()=>{});
+            
+            let query = text;
+            
+            let explicitTargetId = null;
+            let explicitThreadName = null;
+            if (ctx.message.reply_to_message) {
+                const val = messageTargetMap.get(ctx.message.reply_to_message.message_id);
+                if (typeof val === 'string') explicitTargetId = val;
+                else if (val) { explicitTargetId = val.targetId; explicitThreadName = val.threadName; }
+            }
+            if (!explicitTargetId && ctx.message.reply_to_message?.reply_markup?.inline_keyboard?.[0]?.[0]?.callback_data?.startsWith('focus_')) {
+                explicitTargetId = ctx.message.reply_to_message.reply_markup.inline_keyboard[0][0].callback_data.replace('focus_', '');
+            }
+            
+            if (query.startsWith('!')) {
+                 const match = query.match(/^!([a-zA-Z0-9_-]+)(?:\s+([\s\S]*))?$/);
+                 if (match) {
+                     const skillName = match[1];
+                     const skillArgs = match[2] ? match[2].trim() : '';
+                     query = `/${skillName} ${skillArgs}`.trim();
+                 }
+            } else if (!query.startsWith('/')) {
+                 query = "🎤 [Voice]: " + query;
+            }
+            
+            await handleAgentQuery(ctx, query, explicitTargetId, explicitThreadName);
+            
+            // Cleanup
+            fs.unlinkSync(tmpOgg);
+            fs.unlinkSync(tmpWav);
+            
+        } catch(err) {
+            console.error('Voice Error:', err);
+            const errorMsg = err.message === 'no_chat_input' ? t('ask.no_chat_input') : err.message;
+            ctx.reply('❌ Lỗi xử lý giọng nói: ' + errorMsg).catch(() => {});
         }
     })();
 });
