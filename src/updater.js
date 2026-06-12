@@ -42,17 +42,17 @@ function getLocalVersion() {
 function getRemoteCommitInfo() {
     return new Promise((resolve, reject) => {
         try {
-            // Fetch origin main so we can get the latest commit message
-            execSync('git fetch origin main', { cwd: PROJECT_ROOT, stdio: 'ignore' });
+            // Fetch upstream main so we can get the latest commit message
+            execSync('git fetch upstream main', { cwd: PROJECT_ROOT, stdio: 'ignore' });
             
-            const hash = execSync('git log -1 --format="%h" origin/main', { cwd: PROJECT_ROOT }).toString().trim();
-            const message = execSync('git log -1 --format="%s" origin/main', { cwd: PROJECT_ROOT }).toString().trim();
+            const hash = execSync('git log -1 --format="%h" upstream/main', { cwd: PROJECT_ROOT }).toString().trim();
+            const message = execSync('git log -1 --format="%s" upstream/main', { cwd: PROJECT_ROOT }).toString().trim();
             
             resolve({ hash, message });
         } catch(e) {
             // Fallback to ls-remote if fetch fails
             try {
-                const result = execSync('git ls-remote origin HEAD', { cwd: PROJECT_ROOT }).toString().trim();
+                const result = execSync('git ls-remote upstream HEAD', { cwd: PROJECT_ROOT }).toString().trim();
                 const hash = result.split('\t')[0];
                 resolve({ hash: hash ? hash.substring(0, 7) : null, message: '' });
             } catch(e2) {
@@ -115,10 +115,10 @@ async function checkForUpdates() {
     let hasNewCommits = false;
     if (remoteCommit) {
         try {
-            // Check if origin/main is already merged into HEAD (ancestor of HEAD)
-            execSync('git merge-base --is-ancestor origin/main HEAD', { cwd: PROJECT_ROOT });
+            // Check if upstream/main is already merged into HEAD (ancestor of HEAD)
+            execSync('git merge-base --is-ancestor upstream/main HEAD', { cwd: PROJECT_ROOT });
         } catch (_) {
-            // If the command fails, origin/main is not an ancestor, so we have new commits
+            // If the command fails, upstream/main is not an ancestor, so we have new commits
             hasNewCommits = true;
         }
     }
@@ -148,7 +148,7 @@ function performUpdate() {
         }
 
         // Step 1: Check if package.json will change before we merge
-        exec('git fetch origin main && git diff --name-only HEAD origin/main', { cwd: PROJECT_ROOT }, (err, stdout) => {
+        exec('git fetch upstream main && git diff --name-only HEAD upstream/main', { cwd: PROJECT_ROOT }, (err, stdout) => {
             if (err) return reject(new Error(`git fetch failed: ${err.message}`));
             
             const diffOutput = stdout.trim();
@@ -167,7 +167,7 @@ function performUpdate() {
             }
 
             // Step 3: Try to merge updates from the developer's main branch instead of discarding corrections with reset --hard
-            exec('git merge origin/main -m "Merge updates from developer"', { cwd: PROJECT_ROOT }, (err2, mergeOut) => {
+            exec('git merge upstream/main -m "Merge updates from developer"', { cwd: PROJECT_ROOT }, (err2, mergeOut) => {
                 if (err2) {
                     // Merge failed (e.g., conflicts) -> abort the merge and restore stash
                     try {
@@ -186,6 +186,13 @@ function performUpdate() {
                     } catch (stashPopErr) {
                         console.error('[updater] Failed to pop stash after successful merge:', stashPopErr.message);
                     }
+                }
+
+                // Try to push the merged commits back to the user's fork (origin) to keep it in sync
+                try {
+                    execSync('git push origin main', { cwd: PROJECT_ROOT });
+                } catch (pushErr) {
+                    console.error('[updater] Failed to push to origin after successful merge:', pushErr.message);
                 }
 
                 const nextStep = () => {
