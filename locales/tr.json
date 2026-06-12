@@ -406,5 +406,15 @@
     "menu_schedule_list_desc": "Zamanlanmış görevleri listele",
     "menu_schedule_add_desc": "Yeni bir zamanlanmış görev ekle",
     "menu_schedule_status_desc": "CronCrew durumunu göster"
+  },
+  "btn_skills": "🛠️ Skill'ler",
+  "skills_desc": "Skill seçim menüsünü aç",
+  "skills": {
+    "list_title": "🧩 <b>Mevcut Skill'ler (Sayfa {page}/{totalPages}):</b>\n\nDetayları ve hızlı kullanım şablonunu görmek için bir skill seçin:",
+    "empty": "Yapılandırma dizininde skill bulunamadı.",
+    "detail_title": "🧩 <b>Skill: {name}</b>\n\n",
+    "syntax": "💡 <b>Hızlı çalıştırma sözdizimi:</b>\n<code>!{name} [parametreler]</code>\n\nŞablonu kopyalamak için yukarıdaki komuta dokunun, sohbet çubuğunda düzenleyin ve gönderin!",
+    "back_btn": "◀️ Skill Listesine Dön",
+    "run_btn": "▶️ Skill'i Çalıştır"
   }
 }

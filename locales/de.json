@@ -406,5 +406,15 @@
     "menu_schedule_list_desc": "Geplante Aufgaben auflisten",
     "menu_schedule_add_desc": "Neue geplante Aufgabe hinzufügen",
     "menu_schedule_status_desc": "CronCrew-Status anzeigen"
+  },
+  "btn_skills": "🛠️ Skills",
+  "skills_desc": "Skill-Auswahlmenü öffnen",
+  "skills": {
+    "list_title": "🧩 <b>Verfügbare Skills (Seite {page}/{totalPages}):</b>\n\nWählen Sie unten einen Skill aus, um Details und die Schnellaufrufsyntax anzuzeigen:",
+    "empty": "Keine Skills im Konfigurationsverzeichnis gefunden.",
+    "detail_title": "🧩 <b>Skill: {name}</b>\n\n",
+    "syntax": "💡 <b>Schnellaufrufsyntax:</b>\n<code>!{name} [argumente]</code>\n\nTippen Sie auf den obigen Befehl, um ihn zu kopieren, bearbeiten Sie ihn in der Chatleiste und senden Sie ihn ab!",
+    "back_btn": "◀️ Zurück zu den Skills",
+    "run_btn": "▶️ Skill ausführen"
   }
 }

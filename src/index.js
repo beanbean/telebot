@@ -644,10 +644,13 @@ async function buildMainMenu(overrideThread = null, overrideWorkspace = null, ta
     return Markup.keyboard([
         [`🤖 ${displayTitle}`, `🧠 ${modelName}`],
         [
-            t('menu.btn_screenshot'), 
-            t('menu.btn_artifacts'), 
-            isTurboMode ? t('turbo.btn_on') : t('turbo.btn_off'), 
-            t('menu.btn_latest')
+            t('menu.btn_screenshot') || '📸 Screen', 
+            t('menu.btn_artifacts') || '📦 Artifacts',
+            t('btn_skills') || '🛠️ Skills'
+        ],
+        [
+            isTurboMode ? (t('turbo.btn_on') || '🚀 Turbo ✅') : (t('turbo.btn_off') || '🚀 Turbo'), 
+            t('menu.btn_latest') || '💬 Latest'
         ]
     ]).resize();
 }
@@ -1049,6 +1052,151 @@ bot.action(/^sch_del_(.+)$/, async (ctx) => {
     } catch (err) {
         ctx.reply(t('schedule.error', { error: err.message }), { parse_mode: 'HTML' });
     }
+});
+
+// Helper to get all available skills from ~/.gemini/config/skills
+function getAvailableSkills() {
+    const skillsDir = path.join(os.homedir(), '.gemini', 'config', 'skills');
+    if (!fs.existsSync(skillsDir)) return [];
+    
+    try {
+        const items = fs.readdirSync(skillsDir, { withFileTypes: true });
+        return items
+            .filter(item => item.isDirectory())
+            .map(item => item.name)
+            .filter(name => {
+                // Ensure SKILL.md exists in the folder
+                return fs.existsSync(path.join(skillsDir, name, 'SKILL.md'));
+            });
+    } catch (e) {
+        console.error('Error reading skills directory:', e.message);
+        return [];
+    }
+}
+
+async function handleListSkills(ctx, pageIndex = 0) {
+    const skills = getAvailableSkills();
+    if (skills.length === 0) {
+        return ctx.reply(t('skills.empty') || 'No skills found.');
+    }
+    
+    const itemsPerPage = 8;
+    const totalPages = Math.ceil(skills.length / itemsPerPage);
+    if (pageIndex < 0) pageIndex = 0;
+    if (pageIndex >= totalPages) pageIndex = totalPages - 1;
+    
+    const startIndex = pageIndex * itemsPerPage;
+    const pageSkills = skills.slice(startIndex, startIndex + itemsPerPage);
+    
+    let msg = t('skills.list_title', { page: pageIndex + 1, totalPages }) || `🧩 <b>Available Skills (Page {page}/{totalPages}):</b>\n\nSelect a skill below to see its details and quick call template:`;
+    msg = msg.replace('{page}', pageIndex + 1).replace('{totalPages}', totalPages);
+
+    // Build buttons grid (2 columns)
+    const keyboardButtons = [];
+    for (let i = 0; i < pageSkills.length; i += 2) {
+        const row = [];
+        row.push(Markup.button.callback(pageSkills[i], `skill_info:${pageSkills[i]}:${pageIndex}`));
+        if (i + 1 < pageSkills.length) {
+            row.push(Markup.button.callback(pageSkills[i + 1], `skill_info:${pageSkills[i + 1]}:${pageIndex}`));
+        }
+        keyboardButtons.push(row);
+    }
+    
+    // Pagination row
+    const navRow = [];
+    if (pageIndex > 0) {
+        navRow.push(Markup.button.callback('◀️ Prev', `skill_page:${pageIndex - 1}`));
+    }
+    if (pageIndex < totalPages - 1) {
+        navRow.push(Markup.button.callback('Next ▶️', `skill_page:${pageIndex + 1}`));
+    }
+    if (navRow.length > 0) {
+        keyboardButtons.push(navRow);
+    }
+    
+    const replyMarkup = Markup.inlineKeyboard(keyboardButtons);
+    
+    if (ctx.callbackQuery) {
+        await ctx.editMessageText(msg, { parse_mode: 'HTML', reply_markup: replyMarkup.reply_markup }).catch(e => {
+            if (!e.message.includes('message is not modified')) {
+                ctx.reply(msg, { parse_mode: 'HTML', reply_markup: replyMarkup.reply_markup });
+            }
+        });
+    } else {
+        await ctx.reply(msg, { parse_mode: 'HTML', reply_markup: replyMarkup.reply_markup });
+    }
+}
+
+async function handleSkillInfo(ctx, skillName, returnPage) {
+    const skillsDir = path.join(os.homedir(), '.gemini', 'config', 'skills');
+    const skillMdPath = path.join(skillsDir, skillName, 'SKILL.md');
+    
+    let description = '';
+    if (fs.existsSync(skillMdPath)) {
+        try {
+            const content = fs.readFileSync(skillMdPath, 'utf-8');
+            // Try parsing frontmatter
+            const match = content.match(/^---([\s\S]*?)---/);
+            if (match) {
+                const yaml = match[1];
+                const descMatch = yaml.match(/description:\s*([\s\S]+?)(?=\n\w+:|$)/);
+                if (descMatch) {
+                    description = descMatch[1].trim().replace(/^['"]|['"]$/g, '');
+                }
+            }
+            if (!description) {
+                // Take first few lines after frontmatter
+                const lines = content.replace(/^---[\s\S]*?---/, '').trim().split('\n');
+                description = lines.slice(0, 5).join('\n').trim();
+            }
+        } catch (e) {
+            description = 'Failed to load description.';
+        }
+    } else {
+        description = 'SKILL.md not found.';
+    }
+    
+    let msg = `🧩 <b>Skill:</b> <code>${skillName}</code>\n\n`;
+    if (description) {
+        msg += `📝 <b>Description:</b>\n<i>${description}</i>\n\n`;
+    }
+    
+    let syntaxTemplate = t('skills.syntax') || "💡 <b>Quick call syntax:</b>\n<code>!{name} [arguments]</code>\n\nTap the command above to copy it, edit on your chat bar, and send!";
+    syntaxTemplate = syntaxTemplate.replace(/\{name\}/g, skillName);
+    msg += syntaxTemplate;
+    
+    const buttons = [
+        [
+            Markup.button.callback(t('skills.back_btn') || '◀️ Back to Skills', `skill_page:${returnPage}`),
+            Markup.button.switchToCurrentChat(t('skills.run_btn') || '▶️ Run Skill', `!${skillName} `)
+        ]
+    ];
+    
+    const replyMarkup = Markup.inlineKeyboard(buttons);
+    
+    await ctx.editMessageText(msg, { parse_mode: 'HTML', reply_markup: replyMarkup.reply_markup }).catch(e => {
+        if (!e.message.includes('message is not modified')) {
+            ctx.reply(msg, { parse_mode: 'HTML', reply_markup: replyMarkup.reply_markup });
+        }
+    });
+}
+
+// Register skill commands & handlers
+bot.hears(/^🛠️/i, (ctx) => handleListSkills(ctx, 0));
+bot.command('skills', (ctx) => handleListSkills(ctx, 0));
+bot.command('skill', (ctx) => handleListSkills(ctx, 0));
+
+bot.action(/^skill_page:(\d+)$/, async (ctx) => {
+    const page = parseInt(ctx.match[1], 10);
+    await ctx.answerCbQuery().catch(()=>{});
+    await handleListSkills(ctx, page);
+});
+
+bot.action(/^skill_info:(.+):(\d+)$/, async (ctx) => {
+    const skillName = ctx.match[1];
+    const page = parseInt(ctx.match[2], 10);
+    await ctx.answerCbQuery().catch(()=>{});
+    await handleSkillInfo(ctx, skillName, page);
 });
 
 bot.command('new', async (ctx) => {
@@ -1708,7 +1856,18 @@ const handleWorkspace = (ctx) => {
         const projectsDir = config.projectsDir;
         fs.readdir(projectsDir, { withFileTypes: true }, (err, files) => {
             if (err) return ctx.reply(t('workspace.read_error'));
-            const dirs = files.filter(f => f.isDirectory() && !f.name.startsWith('.')).map(f => f.name);
+            const dirs = files.filter(f => {
+                if (f.name.startsWith('.')) return false;
+                if (f.isDirectory()) return true;
+                if (f.isSymbolicLink()) {
+                    try {
+                        return fs.statSync(path.join(projectsDir, f.name)).isDirectory();
+                    } catch (e) {
+                        return false;
+                    }
+                }
+                return false;
+            }).map(f => f.name);
             const buttons = dirs.map(d => [{ text: `📂 ${d}`, callback_data: `ws_${d}` }]);
             
             ctx.reply(t('workspace.select_prompt'), {
@@ -2612,8 +2771,87 @@ bot.action(/^ans_(.+)$/, async (ctx) => {
     }
 });
 
+async function handleAgentQuery(ctx, query, explicitTargetId = null, explicitThreadName = null) {
+    try {
+        if (explicitThreadName) await switchAgentThread(CDP_PORT, explicitThreadName).catch(()=>{});
+        let targetId = explicitTargetId;
+        let text = "";
+        let interactiveButtons = null;
+
+        if (isTurboMode) {
+            isTurboRunning = true;
+            try {
+                const turboTargetId = explicitTargetId || getPreferredTargetId() || null;
+                text = await runTurboOrchestration(query, CDP_PORT, turboTargetId, ctx, createProgressHandler, stripQueryFromResponse);
+                targetId = turboTargetId;
+            } finally {
+                isTurboRunning = false;
+            }
+        } else {
+            targetId = await sendViaCDP(query, CDP_PORT, explicitTargetId);
+            setReaction(ctx, REACTION.THINKING);
+
+            // Wait briefly for message to render in DOM before anchoring state
+            await new Promise(r => setTimeout(r, 1500));
+            await snapshotChatState(CDP_PORT, targetId).catch(() => {});
+            
+            // Mark TaskWatcher as busy during agent response wait
+            if (global.__taskWatcher) global.__taskWatcher.setBusy(true);
+            try {
+                const isDone = await waitForAgentResponse(CDP_PORT, 450000, createProgressHandler(ctx), targetId);
+                if (isDone) {
+                    let _latestRes = await getFullLatestResponse(CDP_PORT, targetId, explicitThreadName);
+                    text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
+                    interactiveButtons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
+                    
+                    text = stripQueryFromResponse(text, query);
+                } else {
+                    return await ctx.reply(t('ask.timeout'));
+                }
+            } finally {
+                if (global.__taskWatcher) global.__taskWatcher.setBusy(false);
+            }
+        }
+
+        if (!text) text = t('ask.done_empty');
+        const header = await getChatHeader(targetId, t('ask.done'));
+        const buttons = interactiveButtons ? interactiveButtons : await buildMainMenu(null, null, targetId);
+        
+        const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.message.message_id);
+        if (sentIds && sentIds.length > 0 && targetId) {
+            const activeInfo = await getActiveThreadInfo(CDP_PORT, targetId).catch(() => null);
+            const currentThreadName = activeInfo ? activeInfo.name : null;
+            sentIds.forEach(id => messageTargetMap.set(id, { targetId, threadName: currentThreadName }));
+            saveMessageTargetMap(messageTargetMap);
+        }
+    } catch(err) {
+        const errorMsg = err.message === 'no_chat_input' ? t('ask.no_chat_input') : err.message;
+        ctx.reply(t('ask.headless_error', { error: errorMsg })).catch(() => {});
+    }
+}
+
+// Prefix '!' handler for invoking Antigravity skills
+bot.hears(/^!([a-zA-Z0-9_-]+)(?:\s+([\s\S]*))?$/, async (ctx) => {
+    const skillName = ctx.match[1];
+    const skillArgs = ctx.match[2] ? ctx.match[2].trim() : '';
+    const query = `/${skillName} ${skillArgs}`.trim();
+    
+    let explicitTargetId = null;
+    let explicitThreadName = null;
+    if (ctx.message.reply_to_message) {
+        const val = messageTargetMap.get(ctx.message.reply_to_message.message_id);
+        if (typeof val === 'string') explicitTargetId = val;
+        else if (val) { explicitTargetId = val.targetId; explicitThreadName = val.threadName; }
+    }
+    if (!explicitTargetId && ctx.message.reply_to_message?.reply_markup?.inline_keyboard?.[0]?.[0]?.callback_data?.startsWith('focus_')) {
+        explicitTargetId = ctx.message.reply_to_message.reply_markup.inline_keyboard[0][0].callback_data.replace('focus_', '');
+    }
+    
+    await handleAgentQuery(ctx, query, explicitTargetId, explicitThreadName);
+});
+
 bot.on('text', (ctx) => {
-    if (ctx.message.text.startsWith('/')) return;
+    if (ctx.message.text.startsWith('/') || ctx.message.text.startsWith('!')) return;
     let query = ctx.message.text;
     
     let explicitTargetId = null;
@@ -2629,64 +2867,7 @@ bot.on('text', (ctx) => {
         explicitTargetId = ctx.message.reply_to_message.reply_markup.inline_keyboard[0][0].callback_data.replace('focus_', '');
     }
     
-    (async () => {
-        try {
-            if (explicitThreadName) await switchAgentThread(CDP_PORT, explicitThreadName).catch(()=>{});
-            let targetId = explicitTargetId;
-            let text = "";
-            let interactiveButtons = null;
-
-            if (isTurboMode) {
-                isTurboRunning = true;
-                try {
-                    const turboTargetId = explicitTargetId || getPreferredTargetId() || null;
-                    text = await runTurboOrchestration(query, CDP_PORT, turboTargetId, ctx, createProgressHandler, stripQueryFromResponse);
-                    targetId = turboTargetId;
-                } finally {
-                    isTurboRunning = false;
-                }
-            } else {
-                targetId = await sendViaCDP(query, CDP_PORT, explicitTargetId);
-                setReaction(ctx, REACTION.THINKING);
-
-                // Wait briefly for message to render in DOM before anchoring state
-                await new Promise(r => setTimeout(r, 1500));
-                await snapshotChatState(CDP_PORT, targetId).catch(() => {});
-                
-                // Mark TaskWatcher as busy during agent response wait
-                if (global.__taskWatcher) global.__taskWatcher.setBusy(true);
-                try {
-                    const isDone = await waitForAgentResponse(CDP_PORT, 450000, createProgressHandler(ctx), targetId);
-                    if (isDone) {
-                        let _latestRes = await getFullLatestResponse(CDP_PORT, targetId, explicitThreadName);
-                        text = typeof _latestRes === 'string' ? _latestRes : _latestRes.text;
-                        interactiveButtons = typeof _latestRes === 'string' ? null : _latestRes.buttons;
-                        
-                        text = stripQueryFromResponse(text, query);
-                    } else {
-                        return await ctx.reply(t('ask.timeout'));
-                    }
-                } finally {
-                    if (global.__taskWatcher) global.__taskWatcher.setBusy(false);
-                }
-            }
-
-            if (!text) text = t('ask.done_empty');
-            const header = await getChatHeader(targetId, t('ask.done'));
-            const buttons = interactiveButtons ? interactiveButtons : await buildMainMenu(null, null, targetId);
-            
-            const sentIds = await sendLongMessage(ctx, text, header, buttons, ctx.message.message_id);
-            if (sentIds && sentIds.length > 0 && targetId) {
-                const activeInfo = await getActiveThreadInfo(CDP_PORT, targetId).catch(() => null);
-                const currentThreadName = activeInfo ? activeInfo.name : null;
-                sentIds.forEach(id => messageTargetMap.set(id, { targetId, threadName: currentThreadName }));
-                saveMessageTargetMap(messageTargetMap);
-            }
-        } catch(err) {
-            const errorMsg = err.message === 'no_chat_input' ? t('ask.no_chat_input') : err.message;
-            ctx.reply(t('ask.headless_error', { error: errorMsg })).catch(() => {});
-        }
-    })();
+    handleAgentQuery(ctx, query, explicitTargetId, explicitThreadName).catch(()=>{});
 });
 
 // ===== PHOTO & DOCUMENT HANDLER =====

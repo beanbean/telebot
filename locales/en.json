@@ -406,5 +406,15 @@
     "menu_schedule_list_desc": "List scheduled tasks",
     "menu_schedule_add_desc": "Add a new scheduled task",
     "menu_schedule_status_desc": "Show CronCrew status"
+  },
+  "btn_skills": "🛠️ Skills",
+  "skills_desc": "Open skill selection menu",
+  "skills": {
+    "list_title": "🧩 <b>Available Skills (Page {page}/{totalPages}):</b>\n\nSelect a skill below to see its details and quick call template:",
+    "empty": "No skills found in the configuration directory.",
+    "detail_title": "🧩 <b>Skill: {name}</b>\n\n",
+    "syntax": "💡 <b>Quick call syntax:</b>\n<code>!{name} [arguments]</code>\n\nTap the command above to copy it, edit on your chat bar, and send!",
+    "back_btn": "◀️ Back to Skills",
+    "run_btn": "▶️ Run Skill"
   }
 }

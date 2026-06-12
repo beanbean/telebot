@@ -406,5 +406,15 @@
     "menu_schedule_list_desc": "Lister les tâches planifiées",
     "menu_schedule_add_desc": "Ajouter une nouvelle tâche planifiée",
     "menu_schedule_status_desc": "Afficher le statut de CronCrew"
+  },
+  "btn_skills": "🛠️ Skills",
+  "skills_desc": "Ouvrir le menu de sélection des skills",
+  "skills": {
+    "list_title": "🧩 <b>Skills disponibles (Page {page}/{totalPages}):</b>\n\nSélectionnez une skill ci-dessous pour voir ses détails et le modèle d'appel rapide :",
+    "empty": "Aucune skill trouvée dans le dossier de configuration.",
+    "detail_title": "🧩 <b>Skill: {name}</b>\n\n",
+    "syntax": "💡 <b>Syntaxe d'appel rapide :</b>\n<code>!{name} [arguments]</code>\n\n¡Appuyez sur la commande ci-dessus pour la copier, modifiez-la dans votre barre de chat et envoyez-la !",
+    "back_btn": "◀️ Retour aux Skills",
+    "run_btn": "▶️ Exécuter la Skill"
   }
 }
