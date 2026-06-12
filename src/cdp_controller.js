@@ -1143,9 +1143,7 @@ async function sendViaCDP(text, port, specificTargetId = null) {
                                 
                                 // No write-in input, and not a valid radio. DO NOT SUBMIT!
                                 return { found: false, reason: "invalid_modal_option", method: "modal_rejected" };
-                            }on", method: "modal_rejected" };
                             }
-                            
                             // Use the robust centralized locator to find the actual chat input
                             const editor = AG_UI.getChatInput();
                             
