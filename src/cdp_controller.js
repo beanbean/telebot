@@ -635,7 +635,14 @@ async function getInteractiveModalState(port, specificTargetId = null) {
                 expression: `(() => {
                     const container = document.querySelector('.antigravity-agent-side-panel, .modal, [role="dialog"], .interactive-session') || document;
                     const isModal = !!container.querySelector('textarea[placeholder*="Other" i], textarea[placeholder*="answer" i], input[type="radio"], input[type="checkbox"], [role="radio"], [role="checkbox"], select, [data-testid="interactive-modal"]');
-                    if (!isModal) return null;
+                    
+                    const approvalBtns = Array.from(container.querySelectorAll('button')).filter(b => {
+                        const t = (b.textContent || '').trim().toLowerCase();
+                        return t === 'approve' || t === 'reject' || t === 'confirm' || t === 'allow' || t === 'proceed';
+                    });
+                    const hasApproval = approvalBtns.length > 0;
+                    
+                    if (!isModal && !hasApproval) return null;
                     
                     let headerEl = container.querySelector('.modal-header, [data-testid="interactive-modal"] h2, h3.font-medium, fieldset legend');
                     if (container !== document) {
@@ -645,43 +652,57 @@ async function getInteractiveModalState(port, specificTargetId = null) {
                     }
                     let header = (headerEl && headerEl.textContent.trim());
                     
-                    const labels = Array.from(container.querySelectorAll('label'));
-                    let options = labels.map(l => (l.innerText || l.textContent).trim().replace(/^\\d+\\s*\\n?/, '')).filter(t => t && !t.match(/^(Other|Other \\(write your answer\\)|\\d+)$/i));
+                    let options = [];
                     
-                    if (options.length === 0) {
-                        const items = Array.from(container.querySelectorAll('[role="radio"], [role="checkbox"]'));
-                        options = items.map(el => (el.innerText || el.textContent).trim()).filter(Boolean);
-                    }
-                    
-                    if (!header && options.length > 0) {
-                        const firstLabel = container.querySelector('label, [role="radio"], [role="checkbox"]');
-                        if (firstLabel) {
-                            let walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, null);
-                            let textNodesBeforeLabel = [];
-                            let node;
-                            while(node = walker.nextNode()) {
-                                // Stop when we reach the first option
-                                if (node === firstLabel) break;
-                                // Ignore if it's a parent container of the label
-                                if (node.contains(firstLabel)) continue;
-                                
-                                if (node.tagName === 'P' || node.tagName === 'H2' || node.tagName === 'H3' || node.tagName === 'H4') {
-                                    textNodesBeforeLabel.push(node);
+                    if (isModal) {
+                        const labels = Array.from(container.querySelectorAll('label'));
+                        options = labels.map(l => (l.innerText || l.textContent).trim().replace(/^\\d+\\s*\\n?/, '')).filter(t => t && !t.match(/^(Other|Other \\(write your answer\\)|\\d+)$/i));
+                        
+                        if (options.length === 0) {
+                            const items = Array.from(container.querySelectorAll('[role="radio"], [role="checkbox"]'));
+                            options = items.map(el => (el.innerText || el.textContent).trim()).filter(Boolean);
+                        }
+                        
+                        if (!header && options.length > 0) {
+                            const firstLabel = container.querySelector('label, [role="radio"], [role="checkbox"]');
+                            if (firstLabel) {
+                                let walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, null);
+                                let textNodesBeforeLabel = [];
+                                let node;
+                                while(node = walker.nextNode()) {
+                                    if (node === firstLabel) break;
+                                    if (node.contains(firstLabel)) continue;
+                                    if (node.tagName === 'P' || node.tagName === 'H2' || node.tagName === 'H3' || node.tagName === 'H4') {
+                                        textNodesBeforeLabel.push(node);
+                                    }
                                 }
-                            }
-                            
-                            for (let i = textNodesBeforeLabel.length - 1; i >= 0; i--) {
-                                const text = textNodesBeforeLabel[i].textContent.trim();
-                                if (text && text.length > 3) {
-                                    header = text.split('\\n').pop().trim();
-                                    break;
+                                for (let i = textNodesBeforeLabel.length - 1; i >= 0; i--) {
+                                    const text = textNodesBeforeLabel[i].textContent.trim();
+                                    if (text && text.length > 3) {
+                                        header = text.split('\\n').pop().trim();
+                                        break;
+                                    }
                                 }
                             }
                         }
+                    } else if (hasApproval) {
+                        const firstBtn = approvalBtns[0];
+                        const textContainers = Array.from(container.querySelectorAll('p, h2, h3, h4, span, div')).filter(el => {
+                            return el.offsetParent !== null && !el.contains(firstBtn) && (firstBtn.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING);
+                        });
+                        for (let i = textContainers.length - 1; i >= 0; i--) {
+                            const text = textContainers[i].textContent.trim();
+                            if (text && text.length > 5 && text.length < 150) {
+                                header = text;
+                                break;
+                            }
+                        }
+                        options = approvalBtns.map(b => (b.textContent || '').trim());
                     }
-                    header = header || 'Agent Question';
                     
-                    return { header, options };
+                    header = header || (hasApproval ? 'Agent Plan Review' : 'Agent Question');
+                    
+                    return { header, options, isApproval: hasApproval && !isModal };
                 })()`,
                 returnByValue: true
             });
@@ -715,7 +736,7 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
                 modalText += `\n${t('interactive_modal.confirm_prompt')}`;
                 modalButtons = {
                     reply_markup: {
-                        inline_keyboard: [ [{ text: t('interactive_modal.btn_confirm'), callback_data: 'ans_Onayla' }, { text: t('interactive_modal.btn_reject'), callback_data: 'ans_Reddet' }] ]
+                        inline_keyboard: [ [{ text: t('interactive_modal.btn_confirm') || 'Approve', callback_data: 'ans_Approve' }, { text: t('interactive_modal.btn_reject') || 'Reject', callback_data: 'ans_Reject' }] ]
                     }
                 };
             }
@@ -932,6 +953,12 @@ async function waitForAgentResponse(port, timeoutMs = 450000, onProgress = null,
                             const container = document.querySelector('.antigravity-agent-side-panel, .modal, [role="dialog"], .interactive-session') || document;
                             const isModal = !!container.querySelector('textarea[placeholder*="Other" i], textarea[placeholder*="answer" i], input[type="radio"], input[type="checkbox"], [role="radio"], [role="checkbox"], select, [data-testid="interactive-modal"]');
                             
+                            const approvalBtns = Array.from(container.querySelectorAll('button')).filter(b => {
+                                const t = (b.textContent || '').trim().toLowerCase();
+                                return t === 'approve' || t === 'reject' || t === 'confirm' || t === 'allow' || t === 'proceed';
+                            });
+                            const isApproval = approvalBtns.length > 0;
+                            
                             const isGenerating = !!AG_UI.getStopButton();
                             const editor = AG_UI.getChatInput();
                             const isInputDisabled = editor ? (editor.getAttribute('contenteditable') === 'false' || editor.disabled) : false;
@@ -949,7 +976,7 @@ async function waitForAgentResponse(port, timeoutMs = 450000, onProgress = null,
                                 });
                             }
                             
-                            const isIdle = !isGenerating && (!isInputDisabled || isModal) && !isSpinning && !hasPendingButton;
+                            const isIdle = !isGenerating && (!isInputDisabled || isModal || isApproval) && !isSpinning && !hasPendingButton;
                             const hasChat = !!AG_UI.getVisibleChatContainer();
                             return { hasChat, isGenerating, isIdle, isSpinning, hasPendingButton, isModal };
                         })()
@@ -1053,15 +1080,42 @@ async function sendViaCDP(text, port, specificTargetId = null) {
                             const container = document.querySelector('.antigravity-agent-side-panel, .modal, [role="dialog"]') || document;
                             const radios = Array.from(container.querySelectorAll('input[type="radio"], input[type="checkbox"], [role="radio"], [role="checkbox"]'));
                             
+                            const approvalBtns = Array.from(container.querySelectorAll('button')).filter(b => {
+                                const t = (b.textContent || '').trim().toLowerCase();
+                                return t === 'approve' || t === 'reject' || t === 'confirm' || t === 'allow' || t === 'proceed';
+                            });
+
+                            const optIndex = parseInt(escapedText) - 1;
+                            const isValidIndex = !Number.isNaN(optIndex) && optIndex >= 0 && escapedText.match(/^\d+$/);
+
+                            if (approvalBtns.length > 0) {
+                                if (isValidIndex && optIndex < approvalBtns.length) {
+                                    approvalBtns[optIndex].click();
+                                    return { found: true, method: 'approval-button-index', target: '${target.title?.substring(0, 30) || 'unknown'}' };
+                                }
+                                const matched = approvalBtns.find(b => (b.textContent || '').trim().toLowerCase() === escapedText.toLowerCase() || escapedText.toLowerCase() === 'ans_' + (b.textContent || '').trim().toLowerCase());
+                                if (matched) {
+                                    matched.click();
+                                    return { found: true, method: 'approval-button-text', target: '${target.title?.substring(0, 30) || 'unknown'}' };
+                                }
+                                if (escapedText === 'ans_Approve' && approvalBtns.length > 0) {
+                                    approvalBtns[0].click();
+                                    return { found: true, method: 'approval-button-fallback-approve', target: '${target.title?.substring(0, 30) || 'unknown'}' };
+                                }
+                                if (escapedText === 'ans_Reject' && approvalBtns.length > 1) {
+                                    approvalBtns[1].click();
+                                    return { found: true, method: 'approval-button-fallback-reject', target: '${target.title?.substring(0, 30) || 'unknown'}' };
+                                }
+                            }
+
                             if (radios.length > 0) {
                                 // Check for radio/checkbox modal options by index
-                                const optIndex = parseInt(escapedText) - 1;
-                                if (!Number.isNaN(optIndex) && optIndex >= 0 && escapedText.match(/^\\d+$/) && optIndex < radios.length) {
+                                if (isValidIndex && optIndex < radios.length) {
                                     radios[optIndex].click();
                                     const allBtns = Array.from(container.querySelectorAll('button'));
                                     const sb = allBtns.find(b => {
                                         const t = (b.textContent || '').trim().toLowerCase();
-                                        return t === 'submit' || t.startsWith('submit') || t === 'gönder' || t === 'approve' || t === 'allow';
+                                        return t === 'submit' || t.startsWith('submit') || t === 'gönder' || t === 'approve' || t === 'allow' || t === 'proceed';
                                     });
                                     if (sb) setTimeout(() => sb.click(), 50);
                                     return { found: true, method: 'radio', target: '${target.title?.substring(0, 30) || 'unknown'}' };
@@ -1081,7 +1135,7 @@ async function sendViaCDP(text, port, specificTargetId = null) {
                                     const allBtns = Array.from(container.querySelectorAll('button'));
                                     const sb = allBtns.find(b => {
                                         const t = (b.textContent || '').trim().toLowerCase();
-                                        return t === 'submit' || t.startsWith('submit') || t === 'gönder' || t === 'approve' || t === 'allow';
+                                        return t === 'submit' || t.startsWith('submit') || t === 'gönder' || t === 'approve' || t === 'allow' || t === 'proceed';
                                     });
                                     if (sb) setTimeout(() => sb.click(), 50);
                                     return { found: true, method: 'write-in', target: '${target.title?.substring(0, 30) || 'unknown'}' };
@@ -1089,6 +1143,7 @@ async function sendViaCDP(text, port, specificTargetId = null) {
                                 
                                 // No write-in input, and not a valid radio. DO NOT SUBMIT!
                                 return { found: false, reason: "invalid_modal_option", method: "modal_rejected" };
+                            }on", method: "modal_rejected" };
                             }
                             
                             // Use the robust centralized locator to find the actual chat input
