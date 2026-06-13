@@ -3080,13 +3080,10 @@ bot.on('voice', async (ctx) => {
             const tmpWav = path.join(os.tmpdir(), `voice_${Date.now()}.wav`);
             
             // Download file
-            const response = await axios({ url: link.href, responseType: 'stream' });
-            const writer = fs.createWriteStream(tmpOgg);
-            response.data.pipe(writer);
-            await new Promise((resolve, reject) => {
-                writer.on('finish', resolve);
-                writer.on('error', reject);
-            });
+            const response = await fetch(link.href);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const arrayBuffer = await response.arrayBuffer();
+            fs.writeFileSync(tmpOgg, Buffer.from(arrayBuffer));
             
             // Convert to WAV
             await new Promise((resolve, reject) => {
@@ -3110,6 +3107,12 @@ bot.on('voice', async (ctx) => {
             let text = whisperResult.trim();
             // Fallback parsing if -nt doesn't work perfectly (remove timestamps)
             text = text.replace(/\[\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}\]\s*/g, '').trim();
+            
+            // Clean up Vietnamese dictation for exclamation mark skills
+            // Matches: "chấm than reflect", "chấm thân rì phleg", "chấm cảm", etc.
+            text = text.replace(/^(chấm than|chấm thân|chấm cảm|trống than)[\s,]+(rì phleg|rì phờ lếch|reflect)/i, '!reflect ');
+            text = text.replace(/^(chấm than|chấm thân|chấm cảm|trống than)[\s,]+(craw|cờ ro)/i, '!craw ');
+            text = text.replace(/^(chấm than|chấm thân|chấm cảm|trống than)[\s,]+([a-zA-Z]+)/i, '!$2 ');
             
             if (!text) throw new Error("Could not transcribe voice.");
             
