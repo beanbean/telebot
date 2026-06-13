@@ -340,7 +340,7 @@
     "changelog": "📝 <b>Changelog :</b> <i>{message}</i>\n\n",
     "update_note": "<i>💡 Note : Antigravity 2.0 (Standalone) est pris en charge, mais l'IDE est recommandé.</i>\n\n",
     "updating": "Mise à jour...",
-    "auto_updating": "🔄 <b>[Mise à jour auto]</b> Mise à jour du développeur détectée (v{version} - {commit}).\\nFusion des changements et mise à jour en cours...",
+    "auto_updating": "🔄 <b>[Mise à jour auto]</b> Mise à jour du développeur détectée (v{version} - {commit}).\nFusion des changements et mise à jour en cours...",
     "auto_update_failed": "❌ <b>[Mise à jour auto]</b> Échec de la mise à jour : {error}"
   },
   "error": {

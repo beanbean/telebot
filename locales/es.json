@@ -340,7 +340,7 @@
     "changelog": "📝 <b>Changelog:</b> <i>{message}</i>\n\n",
     "update_note": "<i>💡 Nota: Se soporta Antigravity 2.0 (Standalone), pero se recomienda Antigravity IDE.</i>\n\n",
     "updating": "Actualizando...",
-    "auto_updating": "🔄 <b>[Actualización automática]</b> Actualización del desarrollador detectada (v{version} - {commit}).\\nFusionando cambios y actualizando...",
+    "auto_updating": "🔄 <b>[Actualización automática]</b> Actualización del desarrollador detectada (v{version} - {commit}).\nFusionando cambios y actualizando...",
     "auto_update_failed": "❌ <b>[Actualización automática]</b> Error al actualizar: {error}"
   },
   "error": {
