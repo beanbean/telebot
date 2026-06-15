@@ -1,0 +1,2157 @@
+{
+  "has_more": true,
+  "next_cursor": "5bb847d0-50af-49cd-b933-9990697db95c",
+  "object": "list",
+  "page_or_database": {},
+  "request_id": "7faa0f5b-856a-4b77-b65c-bd5987903d00",
+  "results": [
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "00000000-0000-0000-0000-000000000003",
+        "object": "user"
+      },
+      "created_time": "2026-06-12T17:01:00.000Z",
+      "icon": {
+        "icon": {
+          "color": "orange",
+          "name": "brightness-high"
+        },
+        "type": "icon"
+      },
+      "id": "37d9c204-1959-8126-9e8b-f19e5061723c",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "00000000-0000-0000-0000-000000000003",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-12T17:01:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-81f3-a166-dcee4416b4be",
+        "type": "database_id"
+      },
+      "properties": {
+        "% Hoàn Thành": {
+          "formula": {
+            "string": "0%",
+            "type": "string"
+          },
+          "id": "7R9%5B",
+          "type": "formula"
+        },
+        "20' Chân Yên Chi": {
+          "checkbox": false,
+          "id": "DUOh",
+          "type": "checkbox"
+        },
+        "3h Deep Work": {
+          "checkbox": false,
+          "id": "p%60Oh",
+          "type": "checkbox"
+        },
+        "5' in Jesu": {
+          "checkbox": false,
+          "id": "y%60%5E%3C",
+          "type": "checkbox"
+        },
+        "Cải Tiến": {
+          "id": "P7UE",
+          "phone_number": null,
+          "type": "phone_number"
+        },
+        "Giờ  Dậy": {
+          "formula": {
+            "string": "",
+            "type": "string"
+          },
+          "id": "XGb%5C",
+          "type": "formula"
+        },
+        "Giờ Ngủ": {
+          "formula": {
+            "string": "",
+            "type": "string"
+          },
+          "id": "nUwS",
+          "type": "formula"
+        },
+        "Giờ Ngủ Tối Qua": {
+          "date": {
+            "end": null,
+            "start": "2026-06-13",
+            "time_zone": null
+          },
+          "id": "vm%40d",
+          "type": "date"
+        },
+        "Giờ Thức Dậy Sáng Nay": {
+          "date": {
+            "end": null,
+            "start": "2026-06-13",
+            "time_zone": null
+          },
+          "id": "%3FH~%3C",
+          "type": "date"
+        },
+        "Lap": {
+          "has_more": false,
+          "id": "bG_%60",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày": {
+          "date": {
+            "end": null,
+            "start": "2026-06-13",
+            "time_zone": null
+          },
+          "id": "8%22un",
+          "type": "date"
+        },
+        "Thiền 10 phút ": {
+          "checkbox": false,
+          "id": "qdMf",
+          "type": "checkbox"
+        },
+        "Tiêu Đề Ngày": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "mention": {
+                "date": {
+                  "end": null,
+                  "start": "2026-06-13",
+                  "time_zone": null
+                },
+                "type": "date"
+              },
+              "plain_text": "2026-06-13",
+              "type": "mention"
+            }
+          ],
+          "type": "title"
+        },
+        "Viết BMCS Tối": {
+          "checkbox": false,
+          "id": "asqQ",
+          "type": "checkbox"
+        },
+        "Đánh Giá": {
+          "id": "gEXU",
+          "multi_select": [],
+          "type": "multi_select"
+        },
+        "📋 Review Note": {
+          "checkbox": false,
+          "id": "HGYV",
+          "type": "checkbox"
+        }
+      },
+      "public_url": "https://congdau.notion.site/37d9c204195981269e8bf19e5061723c",
+      "url": "https://app.notion.com/p/37d9c204195981269e8bf19e5061723c"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2026-06-12T14:55:00.000Z",
+      "icon": {
+        "emoji": "🦀",
+        "type": "emoji"
+      },
+      "id": "807a2cd7-9d57-4365-b2da-6473db76e73b",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-12T14:55:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-8190-a407-f36fbf6e259f",
+        "type": "database_id"
+      },
+      "properties": {
+        "Cột Trụ": {
+          "has_more": false,
+          "id": "%3ChBI",
+          "relation": [],
+          "type": "relation"
+        },
+        "Danh Mục": {
+          "id": "%5DhjV",
+          "select": {
+            "color": "blue",
+            "id": "b3547e73-4efb-4770-9a68-921478444d76",
+            "name": "Phần Mềm"
+          },
+          "type": "select"
+        },
+        "Dự Án": {
+          "has_more": false,
+          "id": "TaSk",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ghi Chú": {
+          "id": "F8G%7B",
+          "rich_text": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "plain_text": "Unofficial Zalo API library for Rust (educational \u0026 protocol research). Có listener realtime, login bằng cookie/imei/user-agent. Rủi ro ToS/tài khoản, không khuyến nghị production.",
+              "text": {
+                "content": "Unofficial Zalo API library for Rust (educational \u0026 protocol research). Có listener realtime, login bằng cookie/imei/user-agent. Rủi ro ToS/tài khoản, không khuyến nghị production.",
+                "link": null
+              },
+              "type": "text"
+            }
+          ],
+          "type": "rich_text"
+        },
+        "Git URL": {
+          "id": "AcF%3D",
+          "type": "url",
+          "url": "https://github.com/suminhthanh/zca-rs"
+        },
+        "Giá/Phí": {
+          "id": "UK%3E%7C",
+          "number": null,
+          "type": "number"
+        },
+        "Hệ Sinh Thái": {
+          "id": "LgG%3C",
+          "select": {
+            "color": "yellow",
+            "id": "M[\u003cV",
+            "name": "Zalo Stack"
+          },
+          "type": "select"
+        },
+        "Kho Kiến Thức": {
+          "has_more": false,
+          "id": "ymN%3D",
+          "relation": [],
+          "type": "relation"
+        },
+        "Lần Chỉnh Sửa Cuối Cùng": {
+          "id": "c%3C%5Bj",
+          "last_edited_time": "2026-06-12T14:55:00.000Z",
+          "type": "last_edited_time"
+        },
+        "Người Giới Thiệu": {
+          "id": "IOQp",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Thông Tin Liên Hệ": {
+          "id": "74dd2e08-2ee0-4bbb-89f7-066252119aea",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Trạng Thái": {
+          "id": "A''0",
+          "select": {
+            "color": "blue",
+            "id": "74de2dba-9ac6-47ed-99a7-5cfa5aef5d61",
+            "name": "Đang nghiên cứu"
+          },
+          "type": "select"
+        },
+        "Tên Mục": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "plain_text": "zca-rs (Rust)",
+              "text": {
+                "content": "zca-rs (Rust)",
+                "link": null
+              },
+              "type": "text"
+            }
+          ],
+          "type": "title"
+        },
+        "Website": {
+          "id": "%3D%25is",
+          "type": "url",
+          "url": "https://crates.io/crates/zca-rs"
+        }
+      },
+      "public_url": "https://congdau.notion.site/zca-rs-Rust-807a2cd79d574365b2da6473db76e73b",
+      "url": "https://app.notion.com/p/zca-rs-Rust-807a2cd79d574365b2da6473db76e73b"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2026-06-12T14:19:00.000Z",
+      "icon": null,
+      "id": "37d9c204-1959-8004-8a41-fa1026212d21",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-12T14:37:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-8171-823d-eafc3117c3c3",
+        "type": "database_id"
+      },
+      "properties": {
+        "Body": {
+          "id": "fc6a4b7b-5f8f-4b0a-9a16-fcd929f1b9f0",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Chỉnh Sửa Lần Cuối": {
+          "id": "1%7C%228",
+          "last_edited_time": "2026-06-12T14:37:00.000Z",
+          "type": "last_edited_time"
+        },
+        "Con Người": {
+          "has_more": false,
+          "id": "F%3D%22x",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Liên Quan": {
+          "has_more": false,
+          "id": "%5BP%7D%5C",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Title": {
+          "id": "a8b45de2-504c-4fbe-b1bc-0b9d39a581b3",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Content Type": {
+          "id": "2113cce2-61fd-4218-a9bb-956d62d97e2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Cần Xem Xét Lại?": {
+          "checkbox": false,
+          "id": "%5EI%5DF",
+          "type": "checkbox"
+        },
+        "Day Index": {
+          "id": "c8f0aec3-a776-451c-9bbf-187ceb47192c",
+          "number": null,
+          "type": "number"
+        },
+        "Dự Án": {
+          "has_more": false,
+          "id": "%7CdVj",
+          "relation": [],
+          "type": "relation"
+        },
+        "Image URL": {
+          "id": "4e2dfe37-25cc-48ce-9331-eb62b325c0f0",
+          "type": "url",
+          "url": null
+        },
+        "Kho Kiến Thức": {
+          "has_more": false,
+          "id": "%3F~%234",
+          "relation": [],
+          "type": "relation"
+        },
+        "Loại Ghi Chú": {
+          "id": "%60Ckz",
+          "select": {
+            "color": "red",
+            "id": "49466864-1407-4e7a-9654-7eb687138af8",
+            "name": "📥 Nhập nhanh"
+          },
+          "type": "select"
+        },
+        "Loại Tri Thức": {
+          "id": "R%5CHM",
+          "select": null,
+          "type": "select"
+        },
+        "Lưu Trữ": {
+          "checkbox": false,
+          "id": "%2F*gQ",
+          "type": "checkbox"
+        },
+        "Nguồn Media": {
+          "has_more": false,
+          "id": "aiJi",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày Review": {
+          "date": {
+            "end": null,
+            "start": "2026-06-26",
+            "time_zone": null
+          },
+          "id": "dLj%7C",
+          "type": "date"
+        },
+        "Ngày Thực Hiện": {
+          "date": null,
+          "id": "e5fd52db-b92c-499f-80c5-dba5b11138a3",
+          "type": "date"
+        },
+        "Note Liên Quan": {
+          "has_more": false,
+          "id": "%7BE%7DD",
+          "relation": [],
+          "type": "relation"
+        },
+        "Priority": {
+          "id": "06a3a13c-58c3-4d87-aa0b-6537dcef1e05",
+          "number": null,
+          "type": "number"
+        },
+        "Quy Trình Xử Lý": {
+          "id": "Kr%40%5D",
+          "status": {
+            "color": "red",
+            "id": "Edcx",
+            "name": "📥 Capture"
+          },
+          "type": "status"
+        },
+        "Send Time": {
+          "id": "a3cc2981-aa20-4cae-b39e-99750cdf9c2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Target Audience": {
+          "id": "1afe54e6-b7bb-4d92-8e56-955a9280997e",
+          "select": null,
+          "type": "select"
+        },
+        "Tiêu Đề Ghi Chú": {
+          "id": "title",
+          "title": [],
+          "type": "title"
+        },
+        "Trạng Thái": {
+          "id": "fd8296aa-da30-4c35-8865-2ab4d7a808b6",
+          "select": null,
+          "type": "select"
+        },
+        "URL": {
+          "id": "IFfV",
+          "type": "url",
+          "url": null
+        },
+        "Đã xử lý": {
+          "checkbox": false,
+          "id": "DCBB",
+          "type": "checkbox"
+        },
+        "Độ Chín": {
+          "id": "ROGD",
+          "status": {
+            "color": "brown",
+            "id": "aJPc",
+            "name": "🌱 Seed"
+          },
+          "type": "status"
+        },
+        "Ưu Tiên": {
+          "id": "71fc9821-76c9-4723-b2a5-6a793cb19a3d",
+          "select": null,
+          "type": "select"
+        }
+      },
+      "public_url": "https://congdau.notion.site/37d9c204195980048a41fa1026212d21",
+      "url": "https://app.notion.com/p/37d9c204195980048a41fa1026212d21"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2025-01-15T03:21:00.000Z",
+      "description": [],
+      "icon": {
+        "icon": {
+          "color": "orange",
+          "name": "compose"
+        },
+        "type": "icon"
+      },
+      "id": "17c9c204-1959-8171-823d-eafc3117c3c3",
+      "in_trash": false,
+      "is_inline": false,
+      "last_edited_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-12T14:19:00.000Z",
+      "object": "database",
+      "parent": {
+        "block_id": "17c9c204-1959-8149-9293-c7bca35de30f",
+        "type": "block_id"
+      },
+      "properties": {
+        "Body": {
+          "description": null,
+          "id": "fc6a4b7b-5f8f-4b0a-9a16-fcd929f1b9f0",
+          "name": "Body",
+          "rich_text": {},
+          "type": "rich_text"
+        },
+        "Chỉnh Sửa Lần Cuối": {
+          "description": null,
+          "id": "1%7C%228",
+          "last_edited_time": {},
+          "name": "Chỉnh Sửa Lần Cuối",
+          "type": "last_edited_time"
+        },
+        "Con Người": {
+          "description": null,
+          "id": "F%3D%22x",
+          "name": "Con Người",
+          "relation": {
+            "data_source_id": "17c9c204-1959-8147-b847-000bc0320ff1",
+            "database_id": "17c9c204-1959-810c-bc85-e7cfb6279b5f",
+            "dual_property": {
+              "synced_property_id": "3fmF",
+              "synced_property_name": "Ghi Chú"
+            },
+            "type": "dual_property"
+          },
+          "type": "relation"
+        },
+        "Content Liên Quan": {
+          "description": null,
+          "id": "%5BP%7D%5C",
+          "name": "Content Liên Quan",
+          "relation": {
+            "data_source_id": "3029c204-1959-814e-958c-000b301c1f19",
+            "database_id": "3029c204-1959-818b-baf1-c0160db7081e",
+            "dual_property": {
+              "synced_property_id": "bCIw",
+              "synced_property_name": "Tri Thức Gốc"
+            },
+            "type": "dual_property"
+          },
+          "type": "relation"
+        },
+        "Content Title": {
+          "description": null,
+          "id": "a8b45de2-504c-4fbe-b1bc-0b9d39a581b3",
+          "name": "Content Title",
+          "rich_text": {},
+          "type": "rich_text"
+        },
+        "Content Type": {
+          "description": null,
+          "id": "2113cce2-61fd-4218-a9bb-956d62d97e2f",
+          "name": "Content Type",
+          "rich_text": {},
+          "type": "rich_text"
+        },
+        "Cần Xem Xét Lại?": {
+          "checkbox": {},
+          "description": null,
+          "id": "%5EI%5DF",
+          "name": "Cần Xem Xét Lại?",
+          "type": "checkbox"
+        },
+        "Day Index": {
+          "description": null,
+          "id": "c8f0aec3-a776-451c-9bbf-187ceb47192c",
+          "name": "Day Index",
+          "number": {
+            "format": "number"
+          },
+          "type": "number"
+        },
+        "Dự Án": {
+          "description": null,
+          "id": "%7CdVj",
+          "name": "Dự Án",
+          "relation": {
+            "data_source_id": "17c9c204-1959-81bd-b8e0-000bbaa9891d",
+            "database_id": "17c9c204-1959-8181-97ab-c6679cdf8d33",
+            "dual_property": {
+              "synced_property_id": "%3D_oc",
+              "synced_property_name": "Ghi Chú, Họp \u0026 Ý Tưởng💡"
+            },
+            "type": "dual_property"
+          },
+          "type": "relation"
+        },
+        "Image URL": {
+          "description": null,
+          "id": "4e2dfe37-25cc-48ce-9331-eb62b325c0f0",
+          "name": "Image URL",
+          "type": "url",
+          "url": {}
+        },
+        "Kho Kiến Thức": {
+          "description": null,
+          "id": "%3F~%234",
+          "name": "Kho Kiến Thức",
+          "relation": {
+            "data_source_id": "17c9c204-1959-8153-aea3-000baf544584",
+            "database_id": "17c9c204-1959-81ae-b4b6-d4bd3ebe9028",
+            "dual_property": {
+              "synced_property_id": "!%3F5*",
+              "synced_property_name": "Ghi Chú \u0026 Cuộc Họp"
+            },
+            "type": "dual_property"
+          },
+          "type": "relation"
+        },
+        "Loại Ghi Chú": {
+          "description": null,
+          "id": "%60Ckz",
+          "name": "Loại Ghi Chú",
+          "select": {
+            "options": [
+              {
+                "color": "red",
+                "description": "",
+                "id": "49466864-1407-4e7a-9654-7eb687138af8",
+                "name": "📥 Nhập nhanh"
+              },
+              {
+                "color": "yellow",
+                "description": "",
+                "id": "f3facd2b-c577-4645-9108-f20537699a58",
+                "name": "💡 Ý tưởng"
+              },
+              {
+                "color": "default",
+                "description": "",
+                "id": "joEN",
+                "name": "🔎 Nghiên cứu"
+              },
+              {
+                "color": "default",
+                "description": "",
+                "id": "fTIX",
+                "name": "👥 Học \u0026 Sự kiện"
+              },
+              {
+                "color": "purple",
+                "description": "",
+                "id": "7569447b-02a2-4b53-b1fb-a7af056d1687",
+                "name": "🎙️ Ghi âm"
+              },
+              {
+                "color": "pink",
+                "description": "",
+                "id": "IS_t",
+                "name": "💭 Suy nghĩ"
+              },
+              {
+                "color": "green",
+                "description": "",
+                "id": "jNHt",
+                "name": "📋 Quy trình \u0026 Script"
+              },
+              {
+                "color": "blue",
+                "description": "",
+                "id": "d\u003eg^",
+                "name": "⚙️ Hệ thống AI"
+              },
+              {
+                "color": "brown",
+                "description": "",
+                "id": "?JGU",
+                "name": "📓 Ghi nhận"
+              },
+              {
+                "color": "gray",
+                "description": null,
+                "id": "d9467b21-e5e0-41a8-9b93-ce3ed4294d21",
+                "name": "Ghi Chép"
+              },
+              {
+                "color": "orange",
+                "description": null,
+                "id": "0c359c74-bda2-4130-adf2-7c41b9ebe25f",
+                "name": "Tài liệu"
+              }
+            ]
+          },
+          "type": "select"
+        },
+        "Loại Tri Thức": {
+          "description": null,
+          "id": "R%5CHM",
+          "name": "Loại Tri Thức",
+          "select": {
+            "options": [
+              {
+                "color": "blue",
+                "description": "Khái niệm cốt lõi",
+                "id": "dcOC",
+                "name": "💡 Concept"
+              },
+              {
+                "color": "green",
+                "description": "Khung tư duy / mô hình có thể tái sử dụng",
+                "id": "aj\u003ev",
+                "name": "🔧 Framework"
+              },
+              {
+                "color": "yellow",
+                "description": "Phát hiện, nhận ra điều mới",
+                "id": "{M`_",
+                "name": "⚡ Insight"
+              },
+              {
+                "color": "purple",
+                "description": "Góc nhìn / quan điểm / triết lý",
+                "id": "Q:HQ",
+                "name": "👁️ Perspective"
+              },
+              {
+                "color": "orange",
+                "description": "Kỹ thuật / cách làm cụ thể",
+                "id": "Iw^Q",
+                "name": "🛠️ Technique"
+              }
+            ]
+          },
+          "type": "select"
+        },
+        "Lưu Trữ": {
+          "checkbox": {},
+          "description": null,
+          "id": "%2F*gQ",
+          "name": "Lưu Trữ",
+          "type": "checkbox"
+        },
+        "Nguồn Media": {
+          "description": null,
+          "id": "aiJi",
+          "name": "Nguồn Media",
+          "relation": {
+            "data_source_id": "17c9c204-1959-8158-b8b6-000b8d863c71",
+            "database_id": "17c9c204-1959-81bc-ae51-f95d249f6463",
+            "single_property": {},
+            "type": "single_property"
+          },
+          "type": "relation"
+        },
+        "Ngày Review": {
+          "date": {},
+          "description": null,
+          "id": "dLj%7C",
+          "name": "Ngày Review",
+          "type": "date"
+        },
+        "Ngày Thực Hiện": {
+          "date": {},
+          "description": null,
+          "id": "e5fd52db-b92c-499f-80c5-dba5b11138a3",
+          "name": "Ngày Thực Hiện",
+          "type": "date"
+        },
+        "Note Liên Quan": {
+          "description": null,
+          "id": "%7BE%7DD",
+          "name": "Note Liên Quan",
+          "relation": {
+            "data_source_id": "17c9c204-1959-8112-8514-000b955c05ca",
+            "database_id": "17c9c204-1959-8171-823d-eafc3117c3c3",
+            "single_property": {},
+            "type": "single_property"
+          },
+          "type": "relation"
+        },
+        "Priority": {
+          "description": null,
+          "id": "06a3a13c-58c3-4d87-aa0b-6537dcef1e05",
+          "name": "Priority",
+          "number": {
+            "format": "number"
+          },
+          "type": "number"
+        },
+        "Quy Trình Xử Lý": {
+          "description": null,
+          "id": "Kr%40%5D",
+          "name": "Quy Trình Xử Lý",
+          "status": {
+            "groups": [
+              {
+                "color": "default",
+                "id": "jiqp",
+                "name": "To-do",
+                "option_ids": [
+                  "Edcx"
+                ]
+              },
+              {
+                "color": "default",
+                "id": "kYFZ",
+                "name": "In progress",
+                "option_ids": [
+                  ":jRS",
+                  "\\ySC",
+                  "?hSO"
+                ]
+              },
+              {
+                "color": "default",
+                "id": "h\u003ee}",
+                "name": "Complete",
+                "option_ids": [
+                  "\u003cHIi"
+                ]
+              }
+            ],
+            "options": [
+              {
+                "color": "red",
+                "description": null,
+                "id": "Edcx",
+                "name": "📥 Capture"
+              },
+              {
+                "color": "yellow",
+                "description": null,
+                "id": ":jRS",
+                "name": "🪞 Reflect"
+              },
+              {
+                "color": "orange",
+                "description": null,
+                "id": "\\ySC",
+                "name": "🧬 Atomize"
+              },
+              {
+                "color": "blue",
+                "description": null,
+                "id": "?hSO",
+                "name": "🔗 Connect"
+              },
+              {
+                "color": "green",
+                "description": null,
+                "id": "\u003cHIi",
+                "name": "✅ Review"
+              }
+            ]
+          },
+          "type": "status"
+        },
+        "Send Time": {
+          "description": null,
+          "id": "a3cc2981-aa20-4cae-b39e-99750cdf9c2f",
+          "name": "Send Time",
+          "rich_text": {},
+          "type": "rich_text"
+        },
+        "Target Audience": {
+          "description": null,
+          "id": "1afe54e6-b7bb-4d92-8e56-955a9280997e",
+          "name": "Target Audience",
+          "select": {
+            "options": [
+              {
+                "color": "default",
+                "description": null,
+                "id": "Djx=",
+                "name": "player"
+              },
+              {
+                "color": "gray",
+                "description": null,
+                "id": ";D_=",
+                "name": "all"
+              }
+            ]
+          },
+          "type": "select"
+        },
+        "Tiêu Đề Ghi Chú": {
+          "description": null,
+          "id": "title",
+          "name": "Tiêu Đề Ghi Chú",
+          "title": {},
+          "type": "title"
+        },
+        "Trạng Thái": {
+          "description": null,
+          "id": "fd8296aa-da30-4c35-8865-2ab4d7a808b6",
+          "name": "Trạng Thái",
+          "select": {
+            "options": [
+              {
+                "color": "green",
+                "description": null,
+                "id": "4d2e0f21-8704-4c82-830d-98403a8453d2",
+                "name": "Hoạt Động"
+              },
+              {
+                "color": "red",
+                "description": null,
+                "id": "baef7a23-0323-4593-9bcd-71f7c9bf13a7",
+                "name": "Chờ"
+              },
+              {
+                "color": "yellow",
+                "description": null,
+                "id": "e39cf1f3-937f-4836-b1e4-36bab92ee845",
+                "name": "Tạm Ngừng"
+              },
+              {
+                "color": "blue",
+                "description": null,
+                "id": "b7699189-2287-40d9-a094-17e899786c42",
+                "name": "Tiếp Theo"
+              },
+              {
+                "color": "purple",
+                "description": null,
+                "id": "8d76c741-99d8-4c9c-a8bc-88d9a9814942",
+                "name": "Tương Lai 1"
+              },
+              {
+                "color": "pink",
+                "description": null,
+                "id": "ffc5cb01-237b-4890-a5ea-20471d313d7e",
+                "name": "Tương Lai 2"
+              },
+              {
+                "color": "gray",
+                "description": null,
+                "id": "d94a4465-197b-4bf3-a2d9-fd107547ae92",
+                "name": "Tương Lai 3"
+              }
+            ]
+          },
+          "type": "select"
+        },
+        "URL": {
+          "description": null,
+          "id": "IFfV",
+          "name": "URL",
+          "type": "url",
+          "url": {}
+        },
+        "Đã xử lý": {
+          "checkbox": {},
+          "description": "Đánh dấu mục inbox đã được xử lý hay chưa",
+          "id": "DCBB",
+          "name": "Đã xử lý",
+          "type": "checkbox"
+        },
+        "Độ Chín": {
+          "description": null,
+          "id": "ROGD",
+          "name": "Độ Chín",
+          "status": {
+            "groups": [
+              {
+                "color": "default",
+                "id": "QEeB",
+                "name": "To-do",
+                "option_ids": [
+                  "aJPc"
+                ]
+              },
+              {
+                "color": "default",
+                "id": "Orvf",
+                "name": "In progress",
+                "option_ids": [
+                  "h}]A"
+                ]
+              },
+              {
+                "color": "default",
+                "id": "JQiU",
+                "name": "Complete",
+                "option_ids": [
+                  "Ejc\\",
+                  "Akc\\"
+                ]
+              }
+            ],
+            "options": [
+              {
+                "color": "brown",
+                "description": "Vừa ghi, thô",
+                "id": "aJPc",
+                "name": "🌱 Seed"
+              },
+              {
+                "color": "green",
+                "description": "Đang bổ sung, cần review",
+                "id": "h}]A",
+                "name": "🌿 Growing"
+              },
+              {
+                "color": "blue",
+                "description": "Đã review, vững chắc",
+                "id": "Ejc\\",
+                "name": "🌳 Permanent"
+              },
+              {
+                "color": "purple",
+                "description": "Kiến thức lõi, bất biến",
+                "id": "Akc\\",
+                "name": "🏔️ Evergreen"
+              }
+            ]
+          },
+          "type": "status"
+        },
+        "Ưu Tiên": {
+          "description": null,
+          "id": "71fc9821-76c9-4723-b2a5-6a793cb19a3d",
+          "name": "Ưu Tiên",
+          "select": {
+            "options": [
+              {
+                "color": "yellow",
+                "description": null,
+                "id": "be420757-ff24-45e7-99a2-ee819d78e227",
+                "name": "Ngay Lập Tức 🔥"
+              },
+              {
+                "color": "gray",
+                "description": null,
+                "id": "ddbb8550-dd37-4e5e-b8ff-32237de3e256",
+                "name": "Nhanh ⚡"
+              },
+              {
+                "color": "pink",
+                "description": null,
+                "id": "c9dbad91-4f24-4f3c-bc92-dc6d092ed05c",
+                "name": "Đã Lên Lịch 📅"
+              },
+              {
+                "color": "orange",
+                "description": null,
+                "id": "28cd7ba3-1403-45fb-babf-c63d65bd2ff5",
+                "name": "Ưu Tiên 1 🚀"
+              },
+              {
+                "color": "blue",
+                "description": null,
+                "id": "0e538185-54c2-4f2b-bca0-e6228e0ea176",
+                "name": "Ưu Tiên 2"
+              },
+              {
+                "color": "purple",
+                "description": null,
+                "id": "5e5e35a3-cdc0-462d-99cd-000da16356fc",
+                "name": "Ưu Tiên 3"
+              },
+              {
+                "color": "gray",
+                "description": null,
+                "id": "a9126a14-b28a-44bc-a50b-31ba95c44dfc",
+                "name": "Ưu Tiên 4"
+              },
+              {
+                "color": "default",
+                "description": null,
+                "id": "420ae783-b5b2-4d4d-a772-8ed7e2e4493e",
+                "name": "Ưu Tiên 5"
+              },
+              {
+                "color": "green",
+                "description": null,
+                "id": "6eb484cf-1bd2-45f6-91bb-bf7cec6953bf",
+                "name": "Việc Lặt Vặt 🚘"
+              },
+              {
+                "color": "red",
+                "description": null,
+                "id": "558c03b0-3a43-44df-97a3-1635138d5dce",
+                "name": "Lời Nhắc 💭"
+              }
+            ]
+          },
+          "type": "select"
+        }
+      },
+      "public_url": "https://congdau.notion.site/17c9c20419598171823deafc3117c3c3",
+      "title": [
+        {
+          "annotations": {
+            "bold": false,
+            "code": false,
+            "color": "default",
+            "italic": false,
+            "strikethrough": false,
+            "underline": false
+          },
+          "href": null,
+          "plain_text": "Note’ Công Đậu",
+          "text": {
+            "content": "Note’ Công Đậu",
+            "link": null
+          },
+          "type": "text"
+        }
+      ],
+      "url": "https://app.notion.com/p/17c9c20419598171823deafc3117c3c3"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2026-06-12T03:18:00.000Z",
+      "icon": {
+        "emoji": "📐",
+        "type": "emoji"
+      },
+      "id": "fc19ad7d-edae-42bb-b4e6-17dae2adb578",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-12T03:20:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-8171-823d-eafc3117c3c3",
+        "type": "database_id"
+      },
+      "properties": {
+        "Body": {
+          "id": "fc6a4b7b-5f8f-4b0a-9a16-fcd929f1b9f0",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Chỉnh Sửa Lần Cuối": {
+          "id": "1%7C%228",
+          "last_edited_time": "2026-06-12T03:20:00.000Z",
+          "type": "last_edited_time"
+        },
+        "Con Người": {
+          "has_more": false,
+          "id": "F%3D%22x",
+          "relation": [
+            {
+              "id": "17c9c204-1959-812b-bc5d-e8244a341b0a"
+            }
+          ],
+          "type": "relation"
+        },
+        "Content Liên Quan": {
+          "has_more": false,
+          "id": "%5BP%7D%5C",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Title": {
+          "id": "a8b45de2-504c-4fbe-b1bc-0b9d39a581b3",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Content Type": {
+          "id": "2113cce2-61fd-4218-a9bb-956d62d97e2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Cần Xem Xét Lại?": {
+          "checkbox": false,
+          "id": "%5EI%5DF",
+          "type": "checkbox"
+        },
+        "Day Index": {
+          "id": "c8f0aec3-a776-451c-9bbf-187ceb47192c",
+          "number": null,
+          "type": "number"
+        },
+        "Dự Án": {
+          "has_more": false,
+          "id": "%7CdVj",
+          "relation": [],
+          "type": "relation"
+        },
+        "Image URL": {
+          "id": "4e2dfe37-25cc-48ce-9331-eb62b325c0f0",
+          "type": "url",
+          "url": null
+        },
+        "Kho Kiến Thức": {
+          "has_more": false,
+          "id": "%3F~%234",
+          "relation": [],
+          "type": "relation"
+        },
+        "Loại Ghi Chú": {
+          "id": "%60Ckz",
+          "select": {
+            "color": "orange",
+            "id": "0c359c74-bda2-4130-adf2-7c41b9ebe25f",
+            "name": "Tài liệu"
+          },
+          "type": "select"
+        },
+        "Loại Tri Thức": {
+          "id": "R%5CHM",
+          "select": null,
+          "type": "select"
+        },
+        "Lưu Trữ": {
+          "checkbox": false,
+          "id": "%2F*gQ",
+          "type": "checkbox"
+        },
+        "Nguồn Media": {
+          "has_more": false,
+          "id": "aiJi",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày Review": {
+          "date": {
+            "end": null,
+            "start": "2026-06-26",
+            "time_zone": null
+          },
+          "id": "dLj%7C",
+          "type": "date"
+        },
+        "Ngày Thực Hiện": {
+          "date": null,
+          "id": "e5fd52db-b92c-499f-80c5-dba5b11138a3",
+          "type": "date"
+        },
+        "Note Liên Quan": {
+          "has_more": false,
+          "id": "%7BE%7DD",
+          "relation": [],
+          "type": "relation"
+        },
+        "Priority": {
+          "id": "06a3a13c-58c3-4d87-aa0b-6537dcef1e05",
+          "number": null,
+          "type": "number"
+        },
+        "Quy Trình Xử Lý": {
+          "id": "Kr%40%5D",
+          "status": {
+            "color": "red",
+            "id": "Edcx",
+            "name": "📥 Capture"
+          },
+          "type": "status"
+        },
+        "Send Time": {
+          "id": "a3cc2981-aa20-4cae-b39e-99750cdf9c2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Target Audience": {
+          "id": "1afe54e6-b7bb-4d92-8e56-955a9280997e",
+          "select": null,
+          "type": "select"
+        },
+        "Tiêu Đề Ghi Chú": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "plain_text": "Chiến lược học hè",
+              "text": {
+                "content": "Chiến lược học hè",
+                "link": null
+              },
+              "type": "text"
+            }
+          ],
+          "type": "title"
+        },
+        "Trạng Thái": {
+          "id": "fd8296aa-da30-4c35-8865-2ab4d7a808b6",
+          "select": null,
+          "type": "select"
+        },
+        "URL": {
+          "id": "IFfV",
+          "type": "url",
+          "url": null
+        },
+        "Đã xử lý": {
+          "checkbox": false,
+          "id": "DCBB",
+          "type": "checkbox"
+        },
+        "Độ Chín": {
+          "id": "ROGD",
+          "status": {
+            "color": "brown",
+            "id": "aJPc",
+            "name": "🌱 Seed"
+          },
+          "type": "status"
+        },
+        "Ưu Tiên": {
+          "id": "71fc9821-76c9-4723-b2a5-6a793cb19a3d",
+          "select": null,
+          "type": "select"
+        }
+      },
+      "public_url": "https://congdau.notion.site/Chi-n-l-c-h-c-h-fc19ad7dedae42bbb4e617dae2adb578",
+      "url": "https://app.notion.com/p/Chi-n-l-c-h-c-h-fc19ad7dedae42bbb4e617dae2adb578"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2026-06-12T03:15:00.000Z",
+      "icon": {
+        "emoji": "🪞",
+        "type": "emoji"
+      },
+      "id": "8eef27a4-1b94-4af3-b46c-bdb80e2d7538",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "33d9c204-1959-81bd-84f6-0027ca5d0d52",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-12T03:16:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-8171-823d-eafc3117c3c3",
+        "type": "database_id"
+      },
+      "properties": {
+        "Body": {
+          "id": "fc6a4b7b-5f8f-4b0a-9a16-fcd929f1b9f0",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Chỉnh Sửa Lần Cuối": {
+          "id": "1%7C%228",
+          "last_edited_time": "2026-06-12T03:16:00.000Z",
+          "type": "last_edited_time"
+        },
+        "Con Người": {
+          "has_more": false,
+          "id": "F%3D%22x",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Liên Quan": {
+          "has_more": false,
+          "id": "%5BP%7D%5C",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Title": {
+          "id": "a8b45de2-504c-4fbe-b1bc-0b9d39a581b3",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Content Type": {
+          "id": "2113cce2-61fd-4218-a9bb-956d62d97e2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Cần Xem Xét Lại?": {
+          "checkbox": false,
+          "id": "%5EI%5DF",
+          "type": "checkbox"
+        },
+        "Day Index": {
+          "id": "c8f0aec3-a776-451c-9bbf-187ceb47192c",
+          "number": null,
+          "type": "number"
+        },
+        "Dự Án": {
+          "has_more": false,
+          "id": "%7CdVj",
+          "relation": [],
+          "type": "relation"
+        },
+        "Image URL": {
+          "id": "4e2dfe37-25cc-48ce-9331-eb62b325c0f0",
+          "type": "url",
+          "url": null
+        },
+        "Kho Kiến Thức": {
+          "has_more": false,
+          "id": "%3F~%234",
+          "relation": [
+            {
+              "id": "3079c204-1959-8022-b784-e3af36d836d2"
+            }
+          ],
+          "type": "relation"
+        },
+        "Loại Ghi Chú": {
+          "id": "%60Ckz",
+          "select": {
+            "color": "brown",
+            "id": "?JGU",
+            "name": "📓 Ghi nhận"
+          },
+          "type": "select"
+        },
+        "Loại Tri Thức": {
+          "id": "R%5CHM",
+          "select": {
+            "color": "yellow",
+            "id": "{M`_",
+            "name": "⚡ Insight"
+          },
+          "type": "select"
+        },
+        "Lưu Trữ": {
+          "checkbox": false,
+          "id": "%2F*gQ",
+          "type": "checkbox"
+        },
+        "Nguồn Media": {
+          "has_more": false,
+          "id": "aiJi",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày Review": {
+          "date": null,
+          "id": "dLj%7C",
+          "type": "date"
+        },
+        "Ngày Thực Hiện": {
+          "date": null,
+          "id": "e5fd52db-b92c-499f-80c5-dba5b11138a3",
+          "type": "date"
+        },
+        "Note Liên Quan": {
+          "has_more": false,
+          "id": "%7BE%7DD",
+          "relation": [],
+          "type": "relation"
+        },
+        "Priority": {
+          "id": "06a3a13c-58c3-4d87-aa0b-6537dcef1e05",
+          "number": null,
+          "type": "number"
+        },
+        "Quy Trình Xử Lý": {
+          "id": "Kr%40%5D",
+          "status": {
+            "color": "yellow",
+            "id": ":jRS",
+            "name": "🪞 Reflect"
+          },
+          "type": "status"
+        },
+        "Send Time": {
+          "id": "a3cc2981-aa20-4cae-b39e-99750cdf9c2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Target Audience": {
+          "id": "1afe54e6-b7bb-4d92-8e56-955a9280997e",
+          "select": null,
+          "type": "select"
+        },
+        "Tiêu Đề Ghi Chú": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "plain_text": "Anh Sơn trượt dài 5 tuần: trốn việc để bảo vệ hình ảnh bản thân",
+              "text": {
+                "content": "Anh Sơn trượt dài 5 tuần: trốn việc để bảo vệ hình ảnh bản thân",
+                "link": null
+              },
+              "type": "text"
+            }
+          ],
+          "type": "title"
+        },
+        "Trạng Thái": {
+          "id": "fd8296aa-da30-4c35-8865-2ab4d7a808b6",
+          "select": null,
+          "type": "select"
+        },
+        "URL": {
+          "id": "IFfV",
+          "type": "url",
+          "url": null
+        },
+        "Đã xử lý": {
+          "checkbox": false,
+          "id": "DCBB",
+          "type": "checkbox"
+        },
+        "Độ Chín": {
+          "id": "ROGD",
+          "status": {
+            "color": "green",
+            "id": "h}]A",
+            "name": "🌿 Growing"
+          },
+          "type": "status"
+        },
+        "Ưu Tiên": {
+          "id": "71fc9821-76c9-4723-b2a5-6a793cb19a3d",
+          "select": null,
+          "type": "select"
+        }
+      },
+      "public_url": "https://congdau.notion.site/Anh-S-n-tr-t-d-i-5-tu-n-tr-n-vi-c-b-o-v-h-nh-nh-b-n-th-n-8eef27a41b944af3b46cbdb80e2d7538",
+      "url": "https://app.notion.com/p/Anh-S-n-tr-t-d-i-5-tu-n-tr-n-vi-c-b-o-v-h-nh-nh-b-n-th-n-8eef27a41b944af3b46cbdb80e2d7538"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "00000000-0000-0000-0000-000000000003",
+        "object": "user"
+      },
+      "created_time": "2026-06-11T17:01:00.000Z",
+      "icon": {
+        "icon": {
+          "color": "orange",
+          "name": "brightness-high"
+        },
+        "type": "icon"
+      },
+      "id": "37c9c204-1959-817e-ad2f-fdb5d2b8ecb2",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "00000000-0000-0000-0000-000000000003",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-11T17:01:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-81f3-a166-dcee4416b4be",
+        "type": "database_id"
+      },
+      "properties": {
+        "% Hoàn Thành": {
+          "formula": {
+            "string": "0%",
+            "type": "string"
+          },
+          "id": "7R9%5B",
+          "type": "formula"
+        },
+        "20' Chân Yên Chi": {
+          "checkbox": false,
+          "id": "DUOh",
+          "type": "checkbox"
+        },
+        "3h Deep Work": {
+          "checkbox": false,
+          "id": "p%60Oh",
+          "type": "checkbox"
+        },
+        "5' in Jesu": {
+          "checkbox": false,
+          "id": "y%60%5E%3C",
+          "type": "checkbox"
+        },
+        "Cải Tiến": {
+          "id": "P7UE",
+          "phone_number": null,
+          "type": "phone_number"
+        },
+        "Giờ  Dậy": {
+          "formula": {
+            "string": "",
+            "type": "string"
+          },
+          "id": "XGb%5C",
+          "type": "formula"
+        },
+        "Giờ Ngủ": {
+          "formula": {
+            "string": "",
+            "type": "string"
+          },
+          "id": "nUwS",
+          "type": "formula"
+        },
+        "Giờ Ngủ Tối Qua": {
+          "date": {
+            "end": null,
+            "start": "2026-06-12",
+            "time_zone": null
+          },
+          "id": "vm%40d",
+          "type": "date"
+        },
+        "Giờ Thức Dậy Sáng Nay": {
+          "date": {
+            "end": null,
+            "start": "2026-06-12",
+            "time_zone": null
+          },
+          "id": "%3FH~%3C",
+          "type": "date"
+        },
+        "Lap": {
+          "has_more": false,
+          "id": "bG_%60",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày": {
+          "date": {
+            "end": null,
+            "start": "2026-06-12",
+            "time_zone": null
+          },
+          "id": "8%22un",
+          "type": "date"
+        },
+        "Thiền 10 phút ": {
+          "checkbox": false,
+          "id": "qdMf",
+          "type": "checkbox"
+        },
+        "Tiêu Đề Ngày": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "mention": {
+                "date": {
+                  "end": null,
+                  "start": "2026-06-12",
+                  "time_zone": null
+                },
+                "type": "date"
+              },
+              "plain_text": "2026-06-12",
+              "type": "mention"
+            }
+          ],
+          "type": "title"
+        },
+        "Viết BMCS Tối": {
+          "checkbox": false,
+          "id": "asqQ",
+          "type": "checkbox"
+        },
+        "Đánh Giá": {
+          "id": "gEXU",
+          "multi_select": [],
+          "type": "multi_select"
+        },
+        "📋 Review Note": {
+          "checkbox": false,
+          "id": "HGYV",
+          "type": "checkbox"
+        }
+      },
+      "public_url": "https://congdau.notion.site/37c9c2041959817ead2ffdb5d2b8ecb2",
+      "url": "https://app.notion.com/p/37c9c2041959817ead2ffdb5d2b8ecb2"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2026-06-10T20:24:00.000Z",
+      "icon": {
+        "emoji": "🛠️",
+        "type": "emoji"
+      },
+      "id": "ce0b306b-5da2-49c8-8ab3-1aee1d72e8c9",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-10T20:24:00.000Z",
+      "object": "page",
+      "parent": {
+        "page_id": "35c9c204-1959-8037-8ca0-ee14feab2d3c",
+        "type": "page_id"
+      },
+      "properties": {
+        "title": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "plain_text": "Skill /strategy cho Antigravity",
+              "text": {
+                "content": "Skill /strategy cho Antigravity",
+                "link": null
+              },
+              "type": "text"
+            }
+          ],
+          "type": "title"
+        }
+      },
+      "public_url": "https://congdau.notion.site/Skill-strategy-cho-Antigravity-ce0b306b5da249c88ab31aee1d72e8c9",
+      "url": "https://app.notion.com/p/Skill-strategy-cho-Antigravity-ce0b306b5da249c88ab31aee1d72e8c9"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "created_time": "2026-05-10T14:40:00.000Z",
+      "icon": null,
+      "id": "35c9c204-1959-8037-8ca0-ee14feab2d3c",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "457928cb-9852-4192-a59e-75c2966cd940",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-10T20:24:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-8171-823d-eafc3117c3c3",
+        "type": "database_id"
+      },
+      "properties": {
+        "Body": {
+          "id": "fc6a4b7b-5f8f-4b0a-9a16-fcd929f1b9f0",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Chỉnh Sửa Lần Cuối": {
+          "id": "1%7C%228",
+          "last_edited_time": "2026-06-10T20:24:00.000Z",
+          "type": "last_edited_time"
+        },
+        "Con Người": {
+          "has_more": false,
+          "id": "F%3D%22x",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Liên Quan": {
+          "has_more": false,
+          "id": "%5BP%7D%5C",
+          "relation": [],
+          "type": "relation"
+        },
+        "Content Title": {
+          "id": "a8b45de2-504c-4fbe-b1bc-0b9d39a581b3",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Content Type": {
+          "id": "2113cce2-61fd-4218-a9bb-956d62d97e2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Cần Xem Xét Lại?": {
+          "checkbox": false,
+          "id": "%5EI%5DF",
+          "type": "checkbox"
+        },
+        "Day Index": {
+          "id": "c8f0aec3-a776-451c-9bbf-187ceb47192c",
+          "number": null,
+          "type": "number"
+        },
+        "Dự Án": {
+          "has_more": false,
+          "id": "%7CdVj",
+          "relation": [],
+          "type": "relation"
+        },
+        "Image URL": {
+          "id": "4e2dfe37-25cc-48ce-9331-eb62b325c0f0",
+          "type": "url",
+          "url": null
+        },
+        "Kho Kiến Thức": {
+          "has_more": false,
+          "id": "%3F~%234",
+          "relation": [],
+          "type": "relation"
+        },
+        "Loại Ghi Chú": {
+          "id": "%60Ckz",
+          "select": {
+            "color": "default",
+            "id": "fTIX",
+            "name": "👥 Học \u0026 Sự kiện"
+          },
+          "type": "select"
+        },
+        "Loại Tri Thức": {
+          "id": "R%5CHM",
+          "select": {
+            "color": "yellow",
+            "id": "{M`_",
+            "name": "⚡ Insight"
+          },
+          "type": "select"
+        },
+        "Lưu Trữ": {
+          "checkbox": false,
+          "id": "%2F*gQ",
+          "type": "checkbox"
+        },
+        "Nguồn Media": {
+          "has_more": false,
+          "id": "aiJi",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày Review": {
+          "date": {
+            "end": null,
+            "start": "2026-05-24",
+            "time_zone": null
+          },
+          "id": "dLj%7C",
+          "type": "date"
+        },
+        "Ngày Thực Hiện": {
+          "date": null,
+          "id": "e5fd52db-b92c-499f-80c5-dba5b11138a3",
+          "type": "date"
+        },
+        "Note Liên Quan": {
+          "has_more": false,
+          "id": "%7BE%7DD",
+          "relation": [],
+          "type": "relation"
+        },
+        "Priority": {
+          "id": "06a3a13c-58c3-4d87-aa0b-6537dcef1e05",
+          "number": null,
+          "type": "number"
+        },
+        "Quy Trình Xử Lý": {
+          "id": "Kr%40%5D",
+          "status": {
+            "color": "yellow",
+            "id": ":jRS",
+            "name": "🪞 Reflect"
+          },
+          "type": "status"
+        },
+        "Send Time": {
+          "id": "a3cc2981-aa20-4cae-b39e-99750cdf9c2f",
+          "rich_text": [],
+          "type": "rich_text"
+        },
+        "Target Audience": {
+          "id": "1afe54e6-b7bb-4d92-8e56-955a9280997e",
+          "select": null,
+          "type": "select"
+        },
+        "Tiêu Đề Ghi Chú": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "plain_text": "Strategy",
+              "text": {
+                "content": "Strategy",
+                "link": null
+              },
+              "type": "text"
+            }
+          ],
+          "type": "title"
+        },
+        "Trạng Thái": {
+          "id": "fd8296aa-da30-4c35-8865-2ab4d7a808b6",
+          "select": null,
+          "type": "select"
+        },
+        "URL": {
+          "id": "IFfV",
+          "type": "url",
+          "url": null
+        },
+        "Đã xử lý": {
+          "checkbox": false,
+          "id": "DCBB",
+          "type": "checkbox"
+        },
+        "Độ Chín": {
+          "id": "ROGD",
+          "status": {
+            "color": "brown",
+            "id": "aJPc",
+            "name": "🌱 Seed"
+          },
+          "type": "status"
+        },
+        "Ưu Tiên": {
+          "id": "71fc9821-76c9-4723-b2a5-6a793cb19a3d",
+          "select": null,
+          "type": "select"
+        }
+      },
+      "public_url": "https://congdau.notion.site/Strategy-35c9c204195980378ca0ee14feab2d3c",
+      "url": "https://app.notion.com/p/Strategy-35c9c204195980378ca0ee14feab2d3c"
+    },
+    {
+      "archived": false,
+      "cover": null,
+      "created_by": {
+        "id": "00000000-0000-0000-0000-000000000003",
+        "object": "user"
+      },
+      "created_time": "2026-06-10T17:01:00.000Z",
+      "icon": {
+        "icon": {
+          "color": "orange",
+          "name": "brightness-high"
+        },
+        "type": "icon"
+      },
+      "id": "37b9c204-1959-8157-8762-de0f6f0593c8",
+      "in_trash": false,
+      "is_archived": false,
+      "is_locked": false,
+      "last_edited_by": {
+        "id": "00000000-0000-0000-0000-000000000003",
+        "object": "user"
+      },
+      "last_edited_time": "2026-06-10T17:01:00.000Z",
+      "object": "page",
+      "parent": {
+        "database_id": "17c9c204-1959-81f3-a166-dcee4416b4be",
+        "type": "database_id"
+      },
+      "properties": {
+        "% Hoàn Thành": {
+          "formula": {
+            "string": "0%",
+            "type": "string"
+          },
+          "id": "7R9%5B",
+          "type": "formula"
+        },
+        "20' Chân Yên Chi": {
+          "checkbox": false,
+          "id": "DUOh",
+          "type": "checkbox"
+        },
+        "3h Deep Work": {
+          "checkbox": false,
+          "id": "p%60Oh",
+          "type": "checkbox"
+        },
+        "5' in Jesu": {
+          "checkbox": false,
+          "id": "y%60%5E%3C",
+          "type": "checkbox"
+        },
+        "Cải Tiến": {
+          "id": "P7UE",
+          "phone_number": null,
+          "type": "phone_number"
+        },
+        "Giờ  Dậy": {
+          "formula": {
+            "string": "",
+            "type": "string"
+          },
+          "id": "XGb%5C",
+          "type": "formula"
+        },
+        "Giờ Ngủ": {
+          "formula": {
+            "string": "",
+            "type": "string"
+          },
+          "id": "nUwS",
+          "type": "formula"
+        },
+        "Giờ Ngủ Tối Qua": {
+          "date": {
+            "end": null,
+            "start": "2026-06-11",
+            "time_zone": null
+          },
+          "id": "vm%40d",
+          "type": "date"
+        },
+        "Giờ Thức Dậy Sáng Nay": {
+          "date": {
+            "end": null,
+            "start": "2026-06-11",
+            "time_zone": null
+          },
+          "id": "%3FH~%3C",
+          "type": "date"
+        },
+        "Lap": {
+          "has_more": false,
+          "id": "bG_%60",
+          "relation": [],
+          "type": "relation"
+        },
+        "Ngày": {
+          "date": {
+            "end": null,
+            "start": "2026-06-11",
+            "time_zone": null
+          },
+          "id": "8%22un",
+          "type": "date"
+        },
+        "Thiền 10 phút ": {
+          "checkbox": false,
+          "id": "qdMf",
+          "type": "checkbox"
+        },
+        "Tiêu Đề Ngày": {
+          "id": "title",
+          "title": [
+            {
+              "annotations": {
+                "bold": false,
+                "code": false,
+                "color": "default",
+                "italic": false,
+                "strikethrough": false,
+                "underline": false
+              },
+              "href": null,
+              "mention": {
+                "date": {
+                  "end": null,
+                  "start": "2026-06-11",
+                  "time_zone": null
+                },
+                "type": "date"
+              },
+              "plain_text": "2026-06-11",
+              "type": "mention"
+            }
+          ],
+          "type": "title"
+        },
+        "Viết BMCS Tối": {
+          "checkbox": false,
+          "id": "asqQ",
+          "type": "checkbox"
+        },
+        "Đánh Giá": {
+          "id": "gEXU",
+          "multi_select": [],
+          "type": "multi_select"
+        },
+        "📋 Review Note": {
+          "checkbox": false,
+          "id": "HGYV",
+          "type": "checkbox"
+        }
+      },
+      "public_url": "https://congdau.notion.site/37b9c204195981578762de0f6f0593c8",
+      "url": "https://app.notion.com/p/37b9c204195981578762de0f6f0593c8"
+    }
+  ],
+  "type": "page_or_database"
+}

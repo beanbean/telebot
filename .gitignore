@@ -67,3 +67,4 @@ scratch/
 *.cpuprofile
 *.heapsnapshot
 
+models/

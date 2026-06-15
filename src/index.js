@@ -6,6 +6,9 @@ const os = require('os');
 const { exec } = require('child_process');
 const { loadLocale, t, getLang } = require('./i18n');
 const axios = require('axios');
+const { extractFinancialInfo } = require('./finance/ai');
+const { addTransaction, updateBillingStatement, getCreditCards, getSpentAmountThisCycle } = require('./finance/db');
+const { startCronJobs } = require('./finance/cron');
 const { config, isIDERunning, killIDE, cleanLockFile, launchIDE, trustWorkspaceViaCDP, PLATFORM } = require('./platform');
 const { isAgentWorking, getFullLatestResponse, snapshotChatState, captureAgentScreenshot, captureFullIDEScreenshot, waitForAgentResponse, sendViaCDP, triggerNewChat, triggerModelMenu, getAvailableModels, selectModel, getCurrentModel, stopAgent, getQuota, listWindows, setPreferredWindow, getPreferredWindow, getPreferredTargetId, getCachedWindows, closeWindow, listAgentThreads, switchAgentThread, getActiveThreadId, getActiveThreadInfo, setActiveWorkspace, switchStandaloneWorkspace, getLastResolvedThreadId, setOnThreadResolved } = require('./cdp_controller');
 const autoaccept = require('./autoaccept');
@@ -104,6 +107,61 @@ if (ALLOWED_CHAT_IDS.length === 0) {
 
 const bot = new Telegraf(process.env.BOT_TOKEN, { handlerTimeout: 900000 }); // 15 minutes timeout to allow long /ask requests
 
+startCronJobs(bot); // Khởi chạy finance cron jobs
+
+// --- FINANCE BOT COMMANDS ---
+bot.command('tuvan', async (ctx) => {
+  const amountStr = ctx.message.text.split(' ')[1];
+  if (!amountStr) {
+    return ctx.reply('Sử dụng lệnh: /tuvan [số tiền cần thanh toán]\nVí dụ: /tuvan 15000000');
+  }
+  
+  const amount = parseInt(amountStr, 10);
+  if (isNaN(amount)) return ctx.reply('Số tiền không hợp lệ.');
+
+  try {
+    const cards = await getCreditCards();
+    if (!cards || cards.length === 0) return ctx.reply('Chưa có thông tin thẻ trong Database.');
+    
+    let bestCard = null;
+    let maxCashback = 0;
+    
+    for (const card of cards) {
+       const spentThisCycle = await getSpentAmountThisCycle(card.id, card.statement_date);
+       const maxCb = parseInt(card.max_cashback_amount, 10) || 0;
+       const cbPercent = parseFloat(card.cashback_percent) / 100 || 0;
+       
+       if (cbPercent > 0 && maxCb > 0) {
+           const cashbackAlreadyEarned = spentThisCycle * cbPercent;
+           const cashbackRoom = maxCb - cashbackAlreadyEarned;
+           
+           if (cashbackRoom > 0) {
+               const potentialCashback = amount * cbPercent;
+               const actualCashback = Math.min(potentialCashback, cashbackRoom);
+               
+               if (actualCashback > maxCashback) {
+                   maxCashback = actualCashback;
+                   bestCard = card;
+               }
+           }
+       }
+    }
+    
+    if (bestCard) {
+      const cbPercent = parseFloat(bestCard.cashback_percent) / 100 || 0;
+      const spentThisCycle = await getSpentAmountThisCycle(bestCard.id, bestCard.statement_date);
+      const cbRoom = parseInt(bestCard.max_cashback_amount, 10) - (spentThisCycle * cbPercent);
+      ctx.reply(`🎯 Đề xuất Thẻ: ${bestCard.name}\n💰 Dự kiến Cashback thu về: ${Math.round(maxCashback).toLocaleString()} VND\n💳 % Hoàn tiền: ${bestCard.cashback_percent}%\n(Hạn mức hoàn tiền còn lại trong kỳ: ${Math.round(cbRoom).toLocaleString()} VND)`);
+    } else {
+      ctx.reply('Không tìm thấy thẻ nào phù hợp hạn mức lúc này.');
+    }
+  } catch (error) {
+    console.error(error);
+    ctx.reply('Lỗi truy xuất dữ liệu thẻ.');
+  }
+});
+// ----------------------------
+
 let isTurboRunning = false;
 
 // Safe commands/buttons that can pass through during turbo execution
@@ -196,19 +254,83 @@ function updateEnvFile(key, value) {
 
 function markdownToTelegramHtml(text) {
     let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    // Code blocks
+    let codeBlocks = [];
+    html = html.replace(/```([a-z0-9]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        let placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
+        if (lang) {
+            codeBlocks.push(`<pre><code class="language-${lang}">${code}</code></pre>`);
+        } else {
+            codeBlocks.push(`<pre>${code}</pre>`);
+        }
+        return placeholder;
+    });
+
+    html = html.replace(/`([^`]+)`/g, (match, code) => {
+        let placeholder = `___INLINECODE_${codeBlocks.length}___`;
+        codeBlocks.push(`<code>${code}</code>`);
+        return placeholder;
+    });
+
     html = html.replace(/^(#{1,6})\s+(.+)$/gm, '<b>$2</b>');
     html = html.replace(/\*\*([^\*]+)\*\*/g, '<b>$1</b>');
     html = html.replace(/(?<![A-Za-z0-9])\*([^\*]+)\*(?![A-Za-z0-9])/g, '<i>$1</i>');
     html = html.replace(/(?<![A-Za-z0-9])_([^_]+)_(?![A-Za-z0-9])/g, '<i>$1</i>');
-    html = html.replace(/```([a-z0-9]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-        if (lang) return `<pre><code class="language-${lang}">${code}</code></pre>`;
-        return `<pre>${code}</pre>`;
-    });
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    
+    // Lists
+    html = html.replace(/^(\s*)-\s+(.+)$/gm, '$1• $2');
+    
     html = html.replace(/\[x\]/ig, '✅');
     html = html.replace(/\[ \]/g, '⬜');
     html = html.replace(/\[\/\]/g, '🔄');
+
+    // Blockquotes
+    html = html.replace(/^&gt;\s?(.*)$/gm, '<blockquote expandable>$1</blockquote>');
+    html = html.replace(/<\/blockquote>\n<blockquote expandable>/g, '\n');
+
+    // Tables
+    const tableRegex = /^(\|.*\|[\r\n]+)+\|.*\|/gm;
+    html = html.replace(tableRegex, (match) => {
+        const lines = match.trim().split('\n');
+        if (lines.length < 2) return match;
+        if (!lines[1].includes('---') && !lines[1].includes(':-')) return match;
+        
+        const rows = lines.map(line => line.trim().split('|'));
+        const colWidths = [];
+        for (let r = 0; r < rows.length; r++) {
+            for (let c = 0; c < rows[r].length; c++) {
+                const cleanCell = rows[r][c].trim().replace(/<[^>]*>/g, '').replace(/___INLINECODE_\d+___/g, 'inline');
+                if (!colWidths[c] || cleanCell.length > colWidths[c]) {
+                    colWidths[c] = cleanCell.length;
+                }
+            }
+        }
+        
+        let paddedMatch = rows.map((row, r) => {
+            if (r === 1 && row.join('').replace(/-/g, '').replace(/:/g, '').trim() === '') {
+                return '|' + row.map((cell, c) => {
+                    if (c === 0 || c === row.length - 1) return '';
+                    return '-'.repeat(colWidths[c] + 2);
+                }).filter(Boolean).join('|') + '|';
+            }
+            return '|' + row.map((cell, c) => {
+                if (c === 0 || c === row.length - 1) return '';
+                const cleanCell = cell.trim().replace(/<[^>]*>/g, '').replace(/___INLINECODE_\d+___/g, 'inline');
+                const padLen = Math.max(0, colWidths[c] - cleanCell.length);
+                return ' ' + cell.trim() + ' '.repeat(padLen) + ' ';
+            }).filter(Boolean).join('|') + '|';
+        }).join('\n');
+        
+        return `<pre>${paddedMatch}</pre>`;
+    });
+
+    codeBlocks.forEach((code, index) => {
+        html = html.replace(`___CODEBLOCK_${index}___`, code);
+        html = html.replace(`___INLINECODE_${index}___`, code);
+    });
+
     return html;
 }
 
@@ -3014,6 +3136,77 @@ bot.on(['photo', 'document'], (ctx) => {
             
             let caption = ctx.message.caption ? ctx.message.caption : "";
             
+            // --- BẮT ĐẦU CHÈN LOGIC FINANCE ---
+            if (caption.includes('#bill') || caption.includes('/tuvan') || caption.includes('#finance')) {
+                ctx.reply('Đang nhờ Gemini OCR phân tích hóa đơn tài chính...');
+                try {
+                    const cards = await getCreditCards();
+                    const cardNames = cards.map((c) => c.name);
+                    const fs = require('fs');
+                    const base64Image = fs.readFileSync(dest, {encoding: 'base64'});
+                    
+                    const data = await extractFinancialInfo(caption, 'image/jpeg', base64Image, cardNames);
+                    
+                    if (data.type === 'STATEMENT') {
+                      const card = cards.find((c) => c.name === data.card_name);
+                      if (!card) {
+                        ctx.reply(`❌ Lỗi: Nhận diện được thẻ "${data.card_name}" nhưng không có trong Database.`);
+                      } else {
+                        let statementMonth = new Date();
+                        if (data.due_date) {
+                          const parts = data.due_date.split('/');
+                          if (parts.length === 3) statementMonth = new Date(`${parts[2]}-${parts[1]}-01`);
+                        }
+                        await updateBillingStatement({
+                          card_id: card.id,
+                          statement_month: statementMonth.toISOString().split('T')[0],
+                          total_debt: data.total_debt,
+                          minimum_payment: data.minimum_payment
+                        });
+                        ctx.reply(`✅ Đã lưu Sao Kê:\nThẻ: ${data.card_name}\nDư nợ: ${data.total_debt.toLocaleString()} VND\nTT tối thiểu: ${data.minimum_payment.toLocaleString()} VND\nHạn chót: ${data.due_date}\n\nĐã lưu vào Supabase và đặt lịch nhắc nhở!`);
+                      }
+                    } else if (data.type === 'TRANSACTION') {
+                      const card = cards.find((c) => c.name === data.card_name);
+                      if (!card) {
+                        ctx.reply(`❌ Lỗi: Nhận diện được thẻ "${data.card_name}" nhưng không có trong Database.`);
+                      } else {
+                        let transDate = new Date();
+                        if (data.transaction_date) {
+                          const parts = data.transaction_date.split(' ');
+                          const dateParts = parts[0].split('/');
+                          const timeParts = parts[1] ? parts[1].split(':') : ['00', '00'];
+                          transDate = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${timeParts[0]}:${timeParts[1]}:00+07:00`);
+                        }
+                        try {
+                          await addTransaction({
+                            card_id: card.id,
+                            transaction_date: transDate.toISOString(),
+                            amount: data.amount,
+                            description: data.description,
+                            cashback_earned: 0,
+                            is_online: data.is_online
+                          });
+                          const onlineStr = data.is_online ? "🌐 Thanh toán Online (Được tính Cashback)" : "🏪 Quẹt Offline (Không được tính Cashback)";
+                          ctx.reply(`✅ Đã lưu Giao Dịch:\nThẻ: ${data.card_name}\nSố tiền: ${data.amount.toLocaleString()} VND\nNội dung: ${data.description}\nLoại: ${onlineStr}\n\nĐã cập nhật lên hệ thống Brain2!`);
+                        } catch (err) {
+                          if (err.message === "DUPLICATE_TRANSACTION") {
+                            ctx.reply(`⚠️ Bỏ qua Giao Dịch:\nThẻ: ${data.card_name} | Số tiền: ${data.amount} VND.\nGiao dịch này ĐÃ TỒN TẠI trong hệ thống (chống trùng lặp).`);
+                          } else throw err;
+                        }
+                      }
+                    } else {
+                      ctx.reply(`❌ Không nhận diện được dữ liệu tài chính trong ảnh. Thử lại nhé anh.`);
+                    }
+                    fs.unlinkSync(dest); // Xóa file rác
+                    return; // Kết thúc không gửi cho IDE Agent
+                } catch (err) {
+                    console.error("Finance OCR Error:", err);
+                    ctx.reply("Có lỗi khi xử lý hóa đơn tài chính.");
+                    return;
+                }
+            }
+            // --- KẾT THÚC CHÈN LOGIC FINANCE ---
+
             let explicitTargetId = null;
             let explicitThreadName = null;
             let quotedContext = "";
