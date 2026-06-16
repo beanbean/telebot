@@ -119,7 +119,7 @@ setup_pm2() {
             npm install -g pm2
         fi
         cd "$PROJECT_DIR"
-        pm2 start src/index.js --name antigravity-bot
+        pm2 start src/telegram-bot.js --name antigravity-bot
         pm2 save
         pm2 startup 2>/dev/null || true
         print_step "PM2 configured — bot will auto-start on reboot"
@@ -228,7 +228,7 @@ echo -e "${GREEN}${BOLD}══════════════════�
 echo ""
 echo "Quick start:"
 echo "  npm start          # Run the bot"
-echo "  pm2 start src/index.js --name antigravity-bot  # Run with PM2"
+echo "  pm2 start src/telegram-bot.js --name antigravity-bot  # Run with PM2"
 echo ""
 echo "Make sure Antigravity IDE is launched with:"
 echo "  antigravity --remote-debugging-port=9333"

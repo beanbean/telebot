@@ -1,7 +1,7 @@
 /**
  * Watchdog Agent for Antigravity Telegram Bot
  * 
- * Monitors the bot process (src/index.js), restarts it if it crashes,
+ * Monitors the bot process (src/telegram-bot.js), restarts it if it crashes,
  * and force-restarts it if it becomes unresponsive (heartbeat check).
  */
 
@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 
 const PROJECT_ROOT = path.join(__dirname, '..');
-const BOT_SCRIPT = path.join(PROJECT_ROOT, 'src', 'index.js');
+const BOT_SCRIPT = path.join(PROJECT_ROOT, 'src', 'telegram-bot.js');
 const HEARTBEAT_FILE = path.join(PROJECT_ROOT, '.heartbeat');
 
 const HEARTBEAT_TIMEOUT_MS = 90000; // 90 seconds

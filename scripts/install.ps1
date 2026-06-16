@@ -118,7 +118,7 @@ function Setup-PM2 {
         try {
             npm install -g pm2
             Set-Location $ProjectDir
-            pm2 start src/index.js --name antigravity-bot
+            pm2 start src/telegram-bot.js --name antigravity-bot
             pm2 save
             Write-Host "[✓] PM2 configured" -ForegroundColor Green
             Write-Host "[!] For auto-start on boot, see: https://github.com/jessety/pm2-installer" -ForegroundColor Yellow

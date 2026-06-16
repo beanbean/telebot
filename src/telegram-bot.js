@@ -258,7 +258,7 @@ function markdownToTelegramHtml(text) {
     // Code blocks
     let codeBlocks = [];
     html = html.replace(/```([a-z0-9]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-        let placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
+        let placeholder = `@@@CODEBLOCK_${codeBlocks.length}@@@`;
         if (lang) {
             codeBlocks.push(`<pre><code class="language-${lang}">${code}</code></pre>`);
         } else {
@@ -268,7 +268,7 @@ function markdownToTelegramHtml(text) {
     });
 
     html = html.replace(/`([^`]+)`/g, (match, code) => {
-        let placeholder = `___INLINECODE_${codeBlocks.length}___`;
+        let placeholder = `@@@INLINECODE_${codeBlocks.length}@@@`;
         codeBlocks.push(`<code>${code}</code>`);
         return placeholder;
     });
@@ -301,7 +301,7 @@ function markdownToTelegramHtml(text) {
         const colWidths = [];
         for (let r = 0; r < rows.length; r++) {
             for (let c = 0; c < rows[r].length; c++) {
-                const cleanCell = rows[r][c].trim().replace(/<[^>]*>/g, '').replace(/___INLINECODE_\d+___/g, 'inline');
+                const cleanCell = rows[r][c].trim().replace(/<[^>]*>/g, '').replace(/@@@INLINECODE_\d+@@@/g, 'inline');
                 if (!colWidths[c] || cleanCell.length > colWidths[c]) {
                     colWidths[c] = cleanCell.length;
                 }
@@ -317,7 +317,7 @@ function markdownToTelegramHtml(text) {
             }
             return '|' + row.map((cell, c) => {
                 if (c === 0 || c === row.length - 1) return '';
-                const cleanCell = cell.trim().replace(/<[^>]*>/g, '').replace(/___INLINECODE_\d+___/g, 'inline');
+                const cleanCell = cell.trim().replace(/<[^>]*>/g, '').replace(/@@@INLINECODE_\d+@@@/g, 'inline');
                 const padLen = Math.max(0, colWidths[c] - cleanCell.length);
                 return ' ' + cell.trim() + ' '.repeat(padLen) + ' ';
             }).filter(Boolean).join('|') + '|';
@@ -327,8 +327,8 @@ function markdownToTelegramHtml(text) {
     });
 
     codeBlocks.forEach((code, index) => {
-        html = html.replace(`___CODEBLOCK_${index}___`, code);
-        html = html.replace(`___INLINECODE_${index}___`, code);
+        html = html.replace(`@@@CODEBLOCK_${index}@@@`, code);
+        html = html.replace(`@@@INLINECODE_${index}@@@`, code);
     });
 
     return html;

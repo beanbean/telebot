@@ -196,7 +196,7 @@ function performUpdate() {
                 }
 
                 const nextStep = () => {
-                    // Set update flag for index.js
+                    // Set update flag for telegram-bot.js
                     try { fs.writeFileSync(path.join(PROJECT_ROOT, '.update_flag'), '1'); } catch (e) {}
                     
                     // Resolve immediately so the bot can send the confirmation message

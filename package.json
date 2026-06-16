@@ -2,10 +2,10 @@
   "name": "antigravity-telegram-suite",
   "version": "3.5.1",
   "description": "Control your Antigravity IDE remotely via Telegram. Send messages, switch models, manage workspaces, take screenshots — all from your phone.",
-  "main": "src/index.js",
+  "main": "src/telegram-bot.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node src/index.js",
+    "start": "node src/telegram-bot.js",
+    "dev": "node src/telegram-bot.js",
     "setup": "bash scripts/install.sh",
     "setup:win": "powershell -ExecutionPolicy Bypass -File scripts/install.ps1",
     "test": "node test/i18n.test.js",
