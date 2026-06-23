@@ -348,6 +348,7 @@ Utiliza `/app` para cambiar el enfoque del bot entre las aplicaciones. La config
 - **[mine260309](https://github.com/mine260309)** — Traducciones i18n para mensajes hardcodeados
 - **[acmavirus/antigravity-telegram-control](https://github.com/acmavirus/antigravity-telegram-control)** — Integración de Telegram de código abierto que sirvió de base para este proyecto
 - **[yazanbaker94/AntiGravity-AutoAccept](https://github.com/yazanbaker94/AntiGravity-AutoAccept)** — Inspiración para el patrón de observador del DOM en el módulo de Auto-Aceptación
+- **[vassoz](https://github.com/vassoz)** — PR #12: Correcciones de conexión CDP, detección automática de pantalla X11 y accesos directos de puertos dinámicos
 
 ## 🌟 Créditos e Inspiraciones
 

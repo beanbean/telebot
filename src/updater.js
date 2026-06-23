@@ -95,6 +95,22 @@ function getRemoteVersion() {
 }
 
 /**
+ * Helper to check if a remote version is newer than the local version using semver logic.
+ */
+function isNewerVersion(remote, local) {
+    if (!remote || !local) return false;
+    const rParts = remote.split('.').map(Number);
+    const lParts = local.split('.').map(Number);
+    for (let i = 0; i < Math.max(rParts.length, lParts.length); i++) {
+        const r = rParts[i] || 0;
+        const l = lParts[i] || 0;
+        if (r > l) return true;
+        if (r < l) return false;
+    }
+    return false;
+}
+
+/**
  * Check if an update is available.
  * Returns { available, localVersion, remoteVersion, localCommit, remoteCommit }
  */
@@ -123,7 +139,7 @@ async function checkForUpdates() {
         }
     }
 
-    const available = hasNewCommits || (remoteVersion && remoteVersion !== local.version);
+    const available = hasNewCommits || (remoteVersion && isNewerVersion(remoteVersion, local.version));
 
     return {
         available: !!available,
@@ -275,5 +291,6 @@ module.exports = {
     checkForUpdates,
     performUpdate,
     getLocalVersion,
-    startUpdateChecker
+    startUpdateChecker,
+    isNewerVersion
 };

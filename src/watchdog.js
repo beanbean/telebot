@@ -33,7 +33,7 @@ function spawnBot() {
         fs.writeFileSync(HEARTBEAT_FILE, Date.now().toString(), 'utf8');
     } catch (_) {}
 
-    botProcess = spawn('node', [BOT_SCRIPT], {
+    botProcess = spawn(process.execPath, [BOT_SCRIPT], {
         cwd: PROJECT_ROOT,
         env: { ...process.env, WATCHDOG: 'true' },
         stdio: 'inherit' // Automatically forwards stdout, stderr, and stdin

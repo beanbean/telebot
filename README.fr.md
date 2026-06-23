@@ -348,6 +348,7 @@ Utilisez `/app` pour basculer le bot entre les applications. Le paramètre `ANTI
 - **[mine260309](https://github.com/mine260309)** — Traductions i18n pour les messages en dur
 - **[acmavirus/antigravity-telegram-control](https://github.com/acmavirus/antigravity-telegram-control)** — L'intégration Telegram open-source propre qui a servi de base à ce projet.
 - **[yazanbaker94/AntiGravity-AutoAccept](https://github.com/yazanbaker94/AntiGravity-AutoAccept)** — Inspiration pour le modèle d'observateur DOM dans le module Auto-Accept.
+- **[vassoz](https://github.com/vassoz)** — PR #12: Corrections de la connexion CDP, détection automatique de l'affichage X11 et raccourcis de ports dynamiques
 
 ## 🌟 Crédits & Inspirations
 

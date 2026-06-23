@@ -93,7 +93,7 @@ function getAppBinary(app = getPreferredApp()) {
             case 'win32':
                 return path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Antigravity', 'Antigravity IDE.exe');
             default: // linux
-                return '/usr/local/bin/antigravity-ide';
+                return '/opt/antigravity-ide/antigravity-ide';
         }
     } else {
         // agent (standalone)
@@ -107,7 +107,7 @@ function getAppBinary(app = getPreferredApp()) {
             case 'win32':
                 return path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Antigravity', 'Antigravity.exe');
             default: // linux
-                return '/usr/bin/antigravity';
+                return '/opt/antigravity/antigravity';
         }
     }
 }
@@ -265,7 +265,7 @@ function killIDE(app = getPreferredApp()) {
                     `pkill -9 -f "user-data-dir.*${app === 'ide' ? 'Antigravity.IDE' : 'Antigravity'}" 2>/dev/null`,
                     `sleep 1`,
                     // Ensure the debugging port is freed
-                    `fuser -k 9333/tcp 2>/dev/null || true`
+                    `fuser -k ${app === 'ide' ? (process.env.IDE_CDP_PORT || 9334) : (process.env.AGENT_CDP_PORT || process.env.DEBUGGING_PORT || 9333)}/tcp 2>/dev/null || true`
                 ].join('; ');
         }
 
@@ -450,6 +450,36 @@ function launchIDE(workspace, port = 9333, app = getPreferredApp()) {
             delete cleanEnv.VSCODE_CODE_CACHE_PATH;
             delete cleanEnv.WAYLAND_DISPLAY;
             delete cleanEnv.GDK_BACKEND;  // LINUX SAFETY: Prevent Wayland crash (RustDesk)
+
+            // Auto-detect X11 DISPLAY and XAUTHORITY on Linux (e.g. when running under systemd user service)
+            if (PLATFORM === 'linux') {
+                if (!cleanEnv.DISPLAY) {
+                    try {
+                        const fs = require('fs');
+                        const files = fs.readdirSync('/tmp/.X11-unix');
+                        const xSocket = files.find(f => f.startsWith('X'));
+                        if (xSocket) {
+                            cleanEnv.DISPLAY = `:${xSocket.substring(1)}`;
+                            console.log(`[platform] Auto-detected DISPLAY=${cleanEnv.DISPLAY}`);
+                        }
+                    } catch (e) {
+                        console.error('[platform] Failed to auto-detect DISPLAY:', e.message);
+                    }
+                }
+                if (!cleanEnv.XAUTHORITY) {
+                    try {
+                        const fs = require('fs');
+                        const xauth = path.join(HOME, '.Xauthority');
+                        if (fs.existsSync(xauth)) {
+                            cleanEnv.XAUTHORITY = xauth;
+                            console.log(`[platform] Auto-detected XAUTHORITY=${cleanEnv.XAUTHORITY}`);
+                        }
+                    } catch (_) {}
+                }
+                if (cleanEnv.DISPLAY) {
+                    cleanEnv.GDK_BACKEND = 'x11';
+                }
+            }
 
             if (isRunning && PLATFORM === 'linux') {
                 const { execSync } = require('child_process');

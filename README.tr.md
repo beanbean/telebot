@@ -322,6 +322,7 @@ Bot eşzamanlı çalışan **iki Antigravity uygulamasını** destekler:
 - **[mine260309](https://github.com/mine260309)** — Sabit kodlanmış mesajlar için i18n çevirileri
 - **[acmavirus/antigravity-telegram-control](https://github.com/acmavirus/antigravity-telegram-control)** — Bu projenin temelini oluşturan açık kaynak Telegram entegrasyonu
 - **[yazanbaker94/AntiGravity-AutoAccept](https://github.com/yazanbaker94/AntiGravity-AutoAccept)** — Auto-Accept modülünde DOM observer deseni ilham kaynağı
+- **[vassoz](https://github.com/vassoz)** — PR #12: CDP bağlantısı, otomatik X11 ekran tespiti ve dinamik port kısayolları onarımları
 
 ## 🌟 Krediler & İlham Kaynakları
 

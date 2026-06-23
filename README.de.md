@@ -348,6 +348,7 @@ Verwende `/app`, um den Fokus des Bots zwischen den Apps zu wechseln. Die Einste
 - **[mine260309](https://github.com/mine260309)** — i18n-Übersetzungen für hartcodierte Nachrichten
 - **[acmavirus/antigravity-telegram-control](https://github.com/acmavirus/antigravity-telegram-control)** — Die Open-Source-Telegram-Integration, die als Basis für dieses Projekt diente
 - **[yazanbaker94/AntiGravity-AutoAccept](https://github.com/yazanbaker94/AntiGravity-AutoAccept)** — Inspiration für das DOM-Observer-Muster im Auto-Accept-Modul
+- **[vassoz](https://github.com/vassoz)** — PR #12: Behebung von CDP-Verbindungen, automatische X11-Anzeigeerkennung und dynamische Port-Verknüpfungen
 
 ## 🌟 Credits & Inspirationen
 

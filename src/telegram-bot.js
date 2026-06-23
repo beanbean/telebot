@@ -2117,17 +2117,20 @@ bot.command('app', async (ctx) => {
     const appName = currentApp === 'ide' ? '💻 Classic Monaco IDE' : '🤖 Standalone Agent (2.0)';
     const currentPort = CDP_PORT;
     
+    const agentPort = getCDPPort('agent');
+    const idePort = getCDPPort('ide');
+
     let msg = t('app.selection_title') || `🤖 <b>Antigravity App Selection</b>\n\n`;
     msg += t('app.preferred_app', { appName }) + '\n';
     msg += t('app.active_port', { port: currentPort }) + '\n\n';
     msg += t('app.select_prompt') + '\n';
-    msg += `• <b>Standalone Agent:</b> CDP Port 9333\n`;
-    msg += `• <b>Monaco IDE:</b> CDP Port 9334\n\n`;
+    msg += `• <b>Standalone Agent:</b> CDP Port ${agentPort}\n`;
+    msg += `• <b>Monaco IDE:</b> CDP Port ${idePort}\n\n`;
     msg += t('app.persistent_selection') || `⚡ <i>Your selection is permanently saved to the .env file and applied instantly without restarting the bot.</i>`;
 
     const buttons = [
-        [{ text: '🤖 Standalone Agent (Port: 9333)', callback_data: 'pref_app_agent' }],
-        [{ text: '💻 Classic Monaco IDE (Port: 9334)', callback_data: 'pref_app_ide' }]
+        [{ text: `🤖 Standalone Agent (Port: ${agentPort})`, callback_data: 'pref_app_agent' }],
+        [{ text: `💻 Classic Monaco IDE (Port: ${idePort})`, callback_data: 'pref_app_ide' }]
     ];
 
     ctx.reply(msg, {
@@ -2185,6 +2188,8 @@ bot.command('fix_shortcuts', async (ctx) => {
     
     const platform = require('./platform').PLATFORM;
     const { getAppBinary } = require('./platform');
+    const agentPort = getCDPPort('agent');
+    const idePort = getCDPPort('ide');
     
     if (platform === 'linux') {
         // Linux: Update launcher scripts and .desktop files
@@ -2197,37 +2202,37 @@ bot.command('fix_shortcuts', async (ctx) => {
             // Ensure directories exist
             if (!fs.existsSync(localBin)) fs.mkdirSync(localBin, { recursive: true });
 
-            // --- 1. IDE Launcher (Port 9334) ---
+            // --- 1. IDE Launcher ---
             const ideBinary = getAppBinary('ide');
             const ideLauncherPath = path.join(localBin, 'antigravity-ide-launcher.sh');
             const ideDesktopPath = path.join(desktop, 'Antigravity-IDE-CDP.desktop');
             
             if (fs.existsSync(ideBinary) || fs.existsSync(require('fs').realpathSync(ideBinary).replace(/\/[^/]+$/, ''))) {
-                const ideLauncher = `#!/bin/bash\n# Antigravity IDE Launcher — Port 9334\nPORT=9334\nAPP_PATH="${ideBinary}"\n\n# Check if the IDE is already listening on the port\nLISTENING_PIDS=$(lsof -t -i :$PORT -s TCP:LISTEN 2>/dev/null || true)\n\nif [ -n "$LISTENING_PIDS" ]; then\n    echo "[launcher-ide] IDE already running. Opening a new window..."\n    $APP_PATH "$@"\n    exit 0\nfi\n\necho "[launcher-ide] Starting fresh IDE instance..."\n# Clean up stale locks just in case\nrm -f "$HOME/.config/Antigravity IDE/code.lock"\nrm -f "$HOME/.config/Antigravity-IDE/code.lock"\n\n$APP_PATH --remote-debugging-port=$PORT "$@" &\\nAG_PID=$!\\nwait $AG_PID\\n`;
+                const ideLauncher = `#!/bin/bash\n# Antigravity IDE Launcher — Port ${idePort}\nPORT=${idePort}\nAPP_PATH="${ideBinary}"\n\n# Check if the IDE is already listening on the port\nLISTENING_PIDS=$(lsof -t -i :$PORT -s TCP:LISTEN 2>/dev/null || true)\n\nif [ -n "$LISTENING_PIDS" ]; then\n    echo "[launcher-ide] IDE already running. Opening a new window..."\n    $APP_PATH "$@"\n    exit 0\nfi\n\necho "[launcher-ide] Starting fresh IDE instance..."\n# Clean up stale locks just in case\nrm -f "$HOME/.config/Antigravity IDE/code.lock"\nrm -f "$HOME/.config/Antigravity-IDE/code.lock"\n\n$APP_PATH --remote-debugging-port=$PORT "$@" &\\nAG_PID=$!\\nwait $AG_PID\\n`;
                 fs.writeFileSync(ideLauncherPath, ideLauncher, { mode: 0o755 });
 
-                const ideDesktop = `[Desktop Entry]\nName=Antigravity IDE (CDP 9334)\nComment=Start Antigravity IDE with CDP 9334\nExec=${ideLauncherPath} %F\nIcon=antigravity-ide\nType=Application\nTerminal=false\nStartupNotify=false\nStartupWMClass=antigravity-ide\nCategories=Development;IDE;\nMimeType=application/x-antigravity-workspace;\n`;
+                const ideDesktop = `[Desktop Entry]\nName=Antigravity IDE (CDP ${idePort})\nComment=Start Antigravity IDE with CDP ${idePort}\nExec=${ideLauncherPath} %F\nIcon=antigravity-ide\nType=Application\nTerminal=false\nStartupNotify=false\nStartupWMClass=antigravity-ide\nCategories=Development;IDE;\nMimeType=application/x-antigravity-workspace;\n`;
                 fs.writeFileSync(ideDesktopPath, ideDesktop);
                 exec(`chmod +x "${ideDesktopPath}"`);
-                status += `• 💻 <b>Antigravity IDE</b> -> <code>--remote-debugging-port=9334</code> ✅\n`;
+                status += `• 💻 <b>Antigravity IDE</b> -> <code>--remote-debugging-port=${idePort}</code> ✅\n`;
                 fixedCount++;
             } else {
                 status += `• 💻 <i>Antigravity IDE</i> (${t('shortcuts.binary_not_found')})\n`;
             }
 
-            // --- 2. Standalone Agent (Port 9333) ---
+            // --- 2. Standalone Agent ---
             const agentBinary = getAppBinary('agent');
             const agentLauncherPath = path.join(localBin, 'antigravity-standalone-launcher.sh');
             const agentDesktopPath = path.join(desktop, 'Antigravity-Standalone-CDP.desktop');
             
             if (fs.existsSync(agentBinary)) {
-                const agentLauncher = `#!/bin/bash\n# Antigravity Standalone Launcher — Port 9333\nPORT=9333\nAPP_PATH="${agentBinary}"\n\n# Check if the Standalone App is already listening on the port\nLISTENING_PIDS=$(lsof -t -i :$PORT -s TCP:LISTEN 2>/dev/null || true)\n\nif [ -n "$LISTENING_PIDS" ]; then\n    echo "[launcher-standalone] Standalone App already running. Opening a new window..."\n    $APP_PATH "$@"\n    exit 0\nfi\n\necho "[launcher-standalone] Starting fresh Standalone App instance..."\n# Clean up stale locks just in case\nrm -f "$HOME/.config/Antigravity/code.lock"\n\n$APP_PATH --remote-debugging-port=$PORT "$@" &\\nAG_PID=$!\\nwait $AG_PID\\n`;
+                const agentLauncher = `#!/bin/bash\n# Antigravity Standalone Launcher — Port ${agentPort}\nPORT=${agentPort}\nAPP_PATH="${agentBinary}"\n\n# Check if the Standalone App is already listening on the port\nLISTENING_PIDS=$(lsof -t -i :$PORT -s TCP:LISTEN 2>/dev/null || true)\n\nif [ -n "$LISTENING_PIDS" ]; then\n    echo "[launcher-standalone] Standalone App already running. Opening a new window..."\n    $APP_PATH "$@"\n    exit 0\nfi\n\necho "[launcher-standalone] Starting fresh Standalone App instance..."\n# Clean up stale locks just in case\nrm -f "$HOME/.config/Antigravity/code.lock"\n\n$APP_PATH --remote-debugging-port=$PORT "$@" &\\nAG_PID=$!\\nwait $AG_PID\\n`;
                 fs.writeFileSync(agentLauncherPath, agentLauncher, { mode: 0o755 });
 
-                const agentDesktop = `[Desktop Entry]\nName=Antigravity Standalone (CDP 9333)\nComment=Start Antigravity Standalone Agent with CDP 9333\nExec=${agentLauncherPath} %F\nIcon=antigravity-standalone\nType=Application\nTerminal=false\nStartupNotify=false\nStartupWMClass=antigravity\nCategories=Development;IDE;\nMimeType=application/x-antigravity-workspace;\n`;
+                const agentDesktop = `[Desktop Entry]\nName=Antigravity Standalone (CDP ${agentPort})\nComment=Start Antigravity Standalone Agent with CDP ${agentPort}\nExec=${agentLauncherPath} %F\nIcon=antigravity-standalone\nType=Application\nTerminal=false\nStartupNotify=false\nStartupWMClass=antigravity\nCategories=Development;IDE;\nMimeType=application/x-antigravity-workspace;\n`;
                 fs.writeFileSync(agentDesktopPath, agentDesktop);
                 exec(`chmod +x "${agentDesktopPath}"`);
-                status += `• 🤖 <b>Antigravity Standalone</b> -> <code>--remote-debugging-port=9333</code> ✅\n`;
+                status += `• 🤖 <b>Antigravity Standalone</b> -> <code>--remote-debugging-port=${agentPort}</code> ✅\n`;
                 fixedCount++;
             } else {
                 status += `• 🤖 <i>Antigravity Standalone</i> (${t('shortcuts.binary_not_found')})\n`;
@@ -2245,20 +2250,20 @@ bot.command('fix_shortcuts', async (ctx) => {
 $sh = New-Object -ComObject WScript.Shell
 $desktop = [System.IO.Path]::Combine($env:USERPROFILE, "Desktop")
 
-# 1. Standalone Agent (Port 9333)
+# 1. Standalone Agent (Port ${agentPort})
 $lnkAgent = Join-Path $desktop "Antigravity.lnk"
 if (Test-Path $lnkAgent) {
     $lnk = $sh.CreateShortcut($lnkAgent)
-    $lnk.Arguments = "--remote-debugging-port=9333"
+    $lnk.Arguments = "--remote-debugging-port=${agentPort}"
     $lnk.Save()
     Write-Output "agent-fixed"
 }
 
-# 2. Classic IDE (Port 9334)
+# 2. Classic IDE (Port ${idePort})
 $lnkIDE = Join-Path $desktop "Antigravity IDE.lnk"
 if (Test-Path $lnkIDE) {
     $lnk = $sh.CreateShortcut($lnkIDE)
-    $lnk.Arguments = "--remote-debugging-port=9334"
+    $lnk.Arguments = "--remote-debugging-port=${idePort}"
     $lnk.Save()
     Write-Output "ide-fixed"
 }
@@ -2278,13 +2283,13 @@ if (Test-Path $lnkIDE) {
                 const output = stdout.toLowerCase();
                 let fixedCount = 0;
                 if (output.includes('agent-fixed')) {
-                    status += '\u2022 \ud83e\udd16 <b>Antigravity.lnk</b> -> <code>--remote-debugging-port=9333</code> \u2705\n';
+                    status += `\u2022 \ud83e\udd16 <b>Antigravity.lnk</b> -> <code>--remote-debugging-port=${agentPort}</code> \u2705\n`;
                     fixedCount++;
                 } else {
                     status += '\u2022 \ud83e\udd16 <i>Antigravity.lnk</i> (' + t('shortcuts.not_found') + ')\n';
                 }
                 if (output.includes('ide-fixed')) {
-                    status += '\u2022 \ud83d\udcbb <b>Antigravity IDE.lnk</b> -> <code>--remote-debugging-port=9334</code> \u2705\n';
+                    status += `\u2022 \ud83d\udcbb <b>Antigravity IDE.lnk</b> -> <code>--remote-debugging-port=${idePort}</code> \u2705\n`;
                     fixedCount++;
                 } else {
                     status += '\u2022 \ud83d\udcbb <i>Antigravity IDE.lnk</i> (' + t('shortcuts.not_found') + ')\n';
@@ -2304,24 +2309,24 @@ if (Test-Path $lnkIDE) {
             let fixedCount = 0;
             let status = t('shortcuts.updated');
             
-            // 1. Standalone Agent (Port 9333)
+            // 1. Standalone Agent (Port ${agentPort})
             const agentBinary = getAppBinary('agent'); // Uygulamanın .app dizinini döndürür
             if (fs.existsSync(agentBinary)) {
                 const agentAppPath = path.join(desktop, 'Antigravity Agent (CDP).app');
                 // open -a komutuyla uygulamayı debug portu ile başlatacak script
-                const script = `do shell script "open -a \\"${agentBinary}\\" --args --remote-debugging-port=9333"`;
+                const script = `do shell script "open -a \\"${agentBinary}\\" --args --remote-debugging-port=${agentPort}"`;
                 execSync(`osacompile -e '${script}' -o "${agentAppPath}"`);
-                status += `• 🤖 <b>Antigravity Agent (CDP).app</b> -> <code>Port 9333</code> ✅\n`;
+                status += `• 🤖 <b>Antigravity Agent (CDP).app</b> -> <code>Port ${agentPort}</code> ✅\n`;
                 fixedCount++;
             }
             
-            // 2. Classic IDE (Port 9334)
+            // 2. Classic IDE (Port ${idePort})
             const ideBinary = getAppBinary('ide');
             if (fs.existsSync(ideBinary)) {
                 const ideAppPath = path.join(desktop, 'Antigravity IDE (CDP).app');
-                const script = `do shell script "open -a \\"${ideBinary}\\" --args --remote-debugging-port=9334"`;
+                const script = `do shell script "open -a \\"${ideBinary}\\" --args --remote-debugging-port=${idePort}"`;
                 execSync(`osacompile -e '${script}' -o "${ideAppPath}"`);
-                status += `• 💻 <b>Antigravity IDE (CDP).app</b> -> <code>Port 9334</code> ✅\n`;
+                status += `• 💻 <b>Antigravity IDE (CDP).app</b> -> <code>Port ${idePort}</code> ✅\n`;
                 fixedCount++;
             }
             
