@@ -226,7 +226,8 @@ const CHAT_EXTRACT_EXPR = `
                 text = text.replace(/\\bSend\\b\\s*\\b(mic)?\\b/gi, '');
                 text = text.replace(/\\bmic\\b/gi, '');
                 text = text.replace(/Worked for \\d+s/gi, '');
-                text = text.replace(/(?<!\\d)\\d{1,2}:\\d{2}(?:\\s*(?:AM|PM))?(?!\\d)/ig, '');
+                // Removed aggressive time stripping that was destroying valid agent times like 20:00
+                // text = text.replace(/(?<!\\d)\\d{1,2}:\\d{2}(?:\\s*(?:AM|PM))?(?!\\d)/ig, '');
                 text = text.replace(/Thinking.../g, "").replace(/Gelişim App Dev/g, "");
 
                 text = text.replace(/^\\s*(Plan|Execute|Review|Task|Walkthrough|Implementation Plan)\\s*$/gm, '');
@@ -302,7 +303,23 @@ const CHAT_EXTRACT_EXPR = `
                         // Use centralized logic to remove Thought blocks
                         AG_UI.removeThoughtBlocks(clone);
                         
-                        Array.from(clone.querySelectorAll('button, [role="button"]')).forEach(el => el.remove());
+                        Array.from(clone.querySelectorAll('button, [role="button"]')).forEach(el => {
+                            const t = el.textContent.trim().toLowerCase();
+                            // Remove known action buttons
+                            if (t === 'apply' || t === 'copy' || t === 'run' || t === 'accept' || t === 'reject' || t === 'review changes' || t === 'cancel' || t === 'submit' || t === 'insert' || t === 'terminal' || t.startsWith('apply ')) {
+                                el.remove();
+                            } else {
+                                // Keep context pills/file references, format them as code
+                                const txt = el.textContent.trim();
+                                if (txt) {
+                                    const codeNode = document.createElement('code');
+                                    codeNode.textContent = txt;
+                                    el.parentNode.replaceChild(codeNode, el);
+                                } else {
+                                    el.remove();
+                                }
+                            }
+                        });
                         
                         let userNodes = Array.from(clone.querySelectorAll('.bg-input, [data-message-author="user"], [class*="group/user-input-step"]'));
                         if (userNodes.length === 0 && clone.className && clone.className.includes('user-message')) {
@@ -332,7 +349,24 @@ const CHAT_EXTRACT_EXPR = `
                         const msgs = [];
                         messageNodes.forEach(child => {
                             let clone = child.cloneNode(true);
-                            Array.from(clone.querySelectorAll('style, .material-icons, .material-symbols-outlined, .material-symbols-rounded, .google-symbols, .codicon, [class*="icon"], button')).forEach(el => el.remove());
+                            Array.from(clone.querySelectorAll('style, .material-icons, .material-symbols-outlined, .material-symbols-rounded, .google-symbols, .codicon, [class*="icon"]')).forEach(el => el.remove());
+                            
+                            Array.from(clone.querySelectorAll('button, [role="button"]')).forEach(el => {
+                                const t = el.textContent.trim().toLowerCase();
+                                if (t === 'apply' || t === 'copy' || t === 'run' || t === 'accept' || t === 'reject' || t === 'review changes' || t === 'cancel' || t === 'submit' || t === 'insert' || t === 'terminal' || t.startsWith('apply ')) {
+                                    el.remove();
+                                } else {
+                                    const txt = el.textContent.trim();
+                                    if (txt) {
+                                        const codeNode = document.createElement('code');
+                                        codeNode.textContent = txt;
+                                        el.parentNode.replaceChild(codeNode, el);
+                                    } else {
+                                        el.remove();
+                                    }
+                                }
+                            });
+
                             AG_UI.removeThoughtBlocks(clone);
                             let text = cleanText(nodeToMd(clone));
                             if (text && !msgs.includes(text)) msgs.push(text);
@@ -1196,8 +1230,9 @@ async function sendViaCDP(text, port, specificTargetId = null) {
             if (val && val.found) {
                 await new Promise(r => setTimeout(r, 50));
                 try {
-                    await Input.dispatchKeyEvent({ type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13 });
-                    await Input.dispatchKeyEvent({ type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13 });
+                    await Input.dispatchKeyEvent({ type: 'rawKeyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
+                    await Input.dispatchKeyEvent({ type: 'char', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
+                    await Input.dispatchKeyEvent({ type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
                 } catch(e) {}
                 await client.close();
                 console.log(`sendViaCDP: Successfully sent via ${val.method} on "${target.title?.substring(0, 40)}"`);
