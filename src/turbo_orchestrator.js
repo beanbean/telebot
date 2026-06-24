@@ -7,6 +7,19 @@ const {
 } = require('./cdp_controller');
 const { t } = require('./i18n');
 
+function isQuotaError(text) {
+    if (!text || text.length > 800) return false;
+    const lower = text.toLowerCase();
+    return lower.includes('quota exceeded') ||
+           lower.includes('rate limit') ||
+           lower.includes('usage limit') ||
+           lower.includes('resource has been exhausted') ||
+           lower.includes('429 too many requests') ||
+           lower.includes('api key') ||
+           lower.includes('too many requests') ||
+           lower.includes('limit reached');
+}
+
 /**
  * Runs the Multi-Agent "Agents Council" workflow.
  * Phase 1: Planning (Claude)
@@ -44,6 +57,29 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         let _planTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId);
         let planText = typeof _planTextRaw === 'string' ? _planTextRaw : _planTextRaw.text;
         planText = stripQueryFromResponse(planText, pmPrompt);
+
+        if (isQuotaError(planText)) {
+            console.log('[turbo] Claude quota hit during Phase 1. Falling back to Gemini 3.5 Flash.');
+            await ctx.telegram.editMessageText(
+                ctx.chat.id, statusMsgId, undefined,
+                t('turbo.p1_fallback') || '🚀 <b>Turbo Mode Active:</b>\n\n⚠️ Claude limit reached.\n⏳ <b>Phase 1:</b> Falling back to Gemini 3.5 Flash for planning...',
+                { parse_mode: 'HTML' }
+            ).catch(() => {});
+
+            await selectModel(CDP_PORT, "Gemini 3.5 Flash", sentTargetId);
+            await new Promise(r => setTimeout(r, 800));
+
+            sentTargetId = await sendViaCDP(pmPrompt, CDP_PORT, sentTargetId);
+            await new Promise(r => setTimeout(r, 2000));
+            await snapshotChatState(CDP_PORT, sentTargetId).catch(() => {});
+            
+            isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId);
+            if (!isDone) throw new Error(t('turbo.p1_error') || "Gemini 3.5 Flash timed out during the planning phase fallback.");
+
+            _planTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId);
+            planText = typeof _planTextRaw === 'string' ? _planTextRaw : _planTextRaw.text;
+            planText = stripQueryFromResponse(planText, pmPrompt);
+        }
 
         // Update Telegram Status
         await ctx.telegram.editMessageText(
@@ -103,6 +139,29 @@ async function runTurboOrchestration(query, CDP_PORT, explicitTargetId, ctx, cre
         let _reviewTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId3);
         let reviewText = typeof _reviewTextRaw === 'string' ? _reviewTextRaw : _reviewTextRaw.text;
         reviewText = stripQueryFromResponse(reviewText, reviewPrompt);
+
+        if (isQuotaError(reviewText)) {
+            console.log('[turbo] Claude quota hit during Phase 3. Falling back to Gemini 3.1 Pro.');
+            await ctx.telegram.editMessageText(
+                ctx.chat.id, statusMsgId, undefined,
+                t('turbo.p3_fallback') || '🚀 <b>Turbo Mode Active:</b>\n\n✅ <b>Phase 1:</b> Planning\n✅ <b>Phase 2:</b> Coding\n⚠️ Claude limit reached.\n⏳ <b>Phase 3:</b> Falling back to Gemini 3.1 Pro for review...',
+                { parse_mode: 'HTML' }
+            ).catch(() => {});
+
+            await selectModel(CDP_PORT, "Gemini 3.1 Pro (High)", sentTargetId3);
+            await new Promise(r => setTimeout(r, 800));
+
+            sentTargetId3 = await sendViaCDP(reviewPrompt, CDP_PORT, sentTargetId3);
+            await new Promise(r => setTimeout(r, 2000));
+            await snapshotChatState(CDP_PORT, sentTargetId3).catch(() => {});
+            
+            isDone = await waitForAgentResponse(CDP_PORT, 600000, createProgressHandler(ctx), sentTargetId3);
+            if (!isDone) throw new Error(t('turbo.p3_error') || "Gemini 3.1 Pro timed out during the review phase fallback.");
+
+            _reviewTextRaw = await getFullLatestResponse(CDP_PORT, sentTargetId3);
+            reviewText = typeof _reviewTextRaw === 'string' ? _reviewTextRaw : _reviewTextRaw.text;
+            reviewText = stripQueryFromResponse(reviewText, reviewPrompt);
+        }
         
         let fixText = "N/A";
         const hasIssues = reviewText.includes("ISSUES_FOUND: true");
