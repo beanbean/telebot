@@ -249,6 +249,10 @@ function performUpdate() {
  * @param {Array<string>} chatIds - Array of Chat IDs to send notifications to
  */
 function startUpdateChecker(bot, chatIds) {
+    if (process.env.DISABLE_AUTO_UPDATE === 'true') {
+        console.log('[updater] Auto-Update is disabled via DISABLE_AUTO_UPDATE=true');
+        return;
+    }
     if (!chatIds || chatIds.length === 0) return;
 
     const doCheck = async () => {

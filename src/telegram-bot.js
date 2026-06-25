@@ -22,6 +22,36 @@ try {
     console.log('[CronCrew] schedule_client.js not found — schedule features disabled.');
 }
 
+// ===== CLAUDE CODE ENGINE =====
+const { sendToClaude, cancelSession, resetSession, isSessionActive, getSessionInfo, setActiveSession, getLastSessionId } = require('./claude-controller');
+const { listSessions, getLatestSessionId, formatRelativeTime } = require('./session-store');
+
+const CLAUDE_BIN = process.env.CLAUDE_BIN || 'claude';
+const CLAUDE_WORK_DIR = process.env.CLAUDE_WORK_DIR || process.env.HOME;
+const CLAUDE_TIMEOUT = parseInt(process.env.CLAUDE_TIMEOUT) || 900000;
+const CLAUDE_SKIP_PERMS = process.env.CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS === 'true';
+
+// Engine state — persists across restarts
+const ENGINE_STATE_FILE = path.join(os.homedir(), '.gemini', 'antigravity', 'engine.txt');
+function loadEngine() {
+    try { return fs.readFileSync(ENGINE_STATE_FILE, 'utf-8').trim() || 'antigravity'; }
+    catch { return 'antigravity'; }
+}
+function saveEngine(e) {
+    try { fs.writeFileSync(ENGINE_STATE_FILE, e); } catch {}
+}
+let currentEngine = loadEngine(); // 'antigravity' | 'claude'
+
+const CLAUDE_MODEL_STATE_FILE = path.join(os.homedir(), '.gemini', 'antigravity', 'claude_model.txt');
+function loadClaudeModel() {
+    try { return fs.readFileSync(CLAUDE_MODEL_STATE_FILE, 'utf-8').trim() || 'claude-3-7-sonnet'; }
+    catch { return 'claude-3-7-sonnet'; }
+}
+function saveClaudeModel(m) {
+    try { fs.writeFileSync(CLAUDE_MODEL_STATE_FILE, m); } catch {}
+}
+let currentClaudeModel = loadClaudeModel();
+
 const TURBO_STATE_FILE = path.join(os.homedir(), '.gemini', 'antigravity', 'turbo_state.json');
 const RESTART_FLAG_FILE = path.join(os.homedir(), '.gemini', 'antigravity', '.restart_pending');
 
@@ -672,32 +702,43 @@ const handleStatus = async (ctx) => {
     const activeApp = process.env.ANTIGRAVITY_PREFERRED_APP || 'agent';
     msg += t('status.preferred_app_status', { app: activeApp === 'agent' ? 'Standalone' : 'Classic IDE' });
     
-    try {
-        await getActiveThreadId(CDP_PORT);
-        msg += t('status.cdp_active');
-    } catch {
-        msg += t('status.cdp_inactive');
+    if (currentEngine === 'antigravity') {
+        try {
+            await getActiveThreadId(CDP_PORT);
+            msg += t('status.cdp_active');
+        } catch {
+            msg += t('status.cdp_inactive');
+        }
     }
     
     msg += t('status.telegram_bot');
     
-    try {
-        const activeInfo = await getActiveThreadInfo(CDP_PORT);
-        if (activeInfo) {
-            msg += t('status.active_chat');
-            msg += t('status.project_area', { workspace: activeInfo.workspace });
-            msg += t('status.agent_title', { name: activeInfo.name });
-            const currentModel = await getCurrentModel(CDP_PORT);
-            if (currentModel) msg += t('status.selected_model', { model: currentModel });
-            const isWorking = await isAgentWorking(CDP_PORT);
-            const statusStr = isWorking ? t('status.agent_working') : t('status.agent_idle');
-            msg += t('status.agent_status', { status: statusStr });
+    if (currentEngine === 'antigravity') {
+        try {
+            const activeInfo = await getActiveThreadInfo(CDP_PORT);
+            if (activeInfo) {
+                msg += t('status.active_chat');
+                msg += t('status.project_area', { workspace: activeInfo.workspace });
+                msg += t('status.agent_title', { name: activeInfo.name });
+                const currentModel = await getCurrentModel(CDP_PORT);
+                if (currentModel) msg += t('status.selected_model', { model: currentModel });
+                const isWorking = await isAgentWorking(CDP_PORT);
+                const statusStr = isWorking ? t('status.agent_working') : t('status.agent_idle');
+                msg += t('status.agent_status', { status: statusStr });
+            }
+        } catch (e) {
+            // silently fail if we can't get chat info
         }
-    } catch (e) {
-        // silently fail if we can't get chat info
     }
 
-    msg += '\n🛡️ <b>Auto-Accept:</b> ' + (autoaccept.isEnabled ? t('status.autoaccept_on') : t('status.autoaccept_off')) + '\n';
+    msg += '\n🔀 <b>Engine:</b> ' + (currentEngine === 'claude' ? 'Claude Code (CLI)' : 'Antigravity (CDP)') + '\n';
+    if (currentEngine === 'claude') {
+        const cInfo = getSessionInfo(String(ctx.chat.id));
+        msg += '🧠 <b>Model:</b> <code>' + (typeof currentClaudeModel !== 'undefined' ? currentClaudeModel : 'claude-3-7-sonnet') + '</code>\n';
+        msg += '📋 <b>Session:</b> <code>' + (cInfo.sessionId ? cInfo.sessionId.slice(0,8) + '...' : 'new') + '</code>\n';
+        msg += '📁 <b>CWD:</b> <code>' + CLAUDE_WORK_DIR + '</code>\n';
+    }
+    msg += '🛡️ <b>Auto-Accept:</b> ' + (autoaccept.isEnabled ? t('status.autoaccept_on') : t('status.autoaccept_off')) + '\n';
 
     ctx.reply(msg, { parse_mode: 'HTML' });
 };
@@ -776,6 +817,21 @@ async function buildMainMenu(overrideThread = null, overrideWorkspace = null, ta
     // Başlığı max 20 karaktere kısalt
     if (displayTitle.length > 20) displayTitle = displayTitle.substring(0, 18) + '...';
 
+    if (typeof currentEngine !== 'undefined' && currentEngine === 'claude') {
+        return Markup.keyboard([
+            ['📋 Session', '🧠 Model', '🔀 Engine'],
+            [
+                t('menu.btn_screenshot') || '📸 Screen', 
+                t('menu.btn_artifacts') || '📦 Artifacts',
+                t('btn_skills') || '🛠️ Skills'
+            ],
+            [
+                isTurboMode ? (t('turbo.btn_on') || '🚀 Turbo ✅') : (t('turbo.btn_off') || '🚀 Turbo'), 
+                t('menu.btn_latest') || '💬 Latest'
+            ]
+        ]).resize();
+    }
+
     return Markup.keyboard([
         [`🤖 ${displayTitle}`, `🧠 ${modelName}`],
         [
@@ -785,6 +841,7 @@ async function buildMainMenu(overrideThread = null, overrideWorkspace = null, ta
         ],
         [
             isTurboMode ? (t('turbo.btn_on') || '🚀 Turbo ✅') : (t('turbo.btn_off') || '🚀 Turbo'), 
+            '🔀 Engine',
             t('menu.btn_latest') || '💬 Latest'
         ]
     ]).resize();
@@ -935,6 +992,10 @@ bot.command('cmd', async (ctx) => {
 });
 
 bot.command('stop', async (ctx) => {
+    if (currentEngine === 'claude') {
+        const cancelled = cancelSession(String(ctx.chat.id));
+        return ctx.reply(cancelled ? '⏹ Claude request cancelled.' : 'ℹ️ Nothing running.');
+    }
     try {
         setReaction(ctx, REACTION.THINKING);
         const stopped = await stopAgent(CDP_PORT);
@@ -945,6 +1006,154 @@ bot.command('stop', async (ctx) => {
         }
     } catch(e) {
         ctx.reply(t('stop.error', { error: e.message }));
+    }
+});
+
+// ===== ENGINE SWITCH =====
+const handleEngine = async (ctx) => {
+    ctx.reply('🔀 <b>Chọn Engine:</b>', {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard([
+            [Markup.button.callback(
+                (currentEngine === 'antigravity' ? '👉 ' : '') + 'Antigravity (CDP)',
+                'engine_antigravity'
+            )],
+            [Markup.button.callback(
+                (currentEngine === 'claude' ? '👉 ' : '') + 'Claude Code (CLI)',
+                'engine_claude'
+            )]
+        ])
+    });
+};
+bot.command('engine', handleEngine);
+bot.hears(/^🔀/i, handleEngine);
+
+bot.action('engine_antigravity', (ctx) => {
+    currentEngine = 'antigravity';
+    saveEngine('antigravity');
+    ctx.answerCbQuery('Switched to Antigravity');
+    ctx.editMessageText('🔀 Engine: <b>Antigravity (CDP)</b> ✅', { parse_mode: 'HTML' }).catch(() => {});
+});
+
+bot.action('engine_claude', (ctx) => {
+    currentEngine = 'claude';
+    saveEngine('claude');
+    ctx.answerCbQuery('Switched to Claude Code');
+    ctx.editMessageText('🔀 Engine: <b>Claude Code (CLI)</b> ✅', { parse_mode: 'HTML' }).catch(() => {});
+});
+
+// ===== CLAUDE CODE QUERY HANDLER =====
+async function handleClaudeQuery(ctx, query) {
+    const chatId = String(ctx.chat.id);
+    if (isSessionActive(chatId)) {
+        return ctx.reply('⏳ Claude đang xử lý. /stop để huỷ.');
+    }
+
+    setReaction(ctx, REACTION.THINKING);
+    const typingInterval = setInterval(() => ctx.sendChatAction('typing').catch(() => {}), 4000);
+    let statusMsg = await ctx.reply('⏳ Claude đang xử lý...', { parse_mode: 'HTML' });
+    let lastStatus = '';
+    let toolCount = 0;
+
+    try {
+        // Auto-resume latest session if none set
+        let sessionId = getLastSessionId(chatId);
+        if (!sessionId) {
+            const latest = getLatestSessionId(CLAUDE_WORK_DIR);
+            if (latest) { sessionId = latest; setActiveSession(chatId, latest); }
+        }
+
+        const result = await sendToClaude(query, {
+            chatId,
+            workDir: CLAUDE_WORK_DIR,
+            skipPermissions: CLAUDE_SKIP_PERMS,
+            resumeSessionId: sessionId,
+            model: typeof currentClaudeModel !== 'undefined' ? currentClaudeModel : undefined,
+            onEvent: (event) => {
+                let newStatus = null;
+                if (event.type === 'system' && event.subtype === 'init') {
+                    newStatus = '🔌 Connected. Thinking...';
+                } else if (event.type === 'assistant' && event.message?.content) {
+                    for (const block of event.message.content) {
+                        if (block.type === 'tool_use') {
+                            toolCount++;
+                            const toolName = block.name || 'tool';
+                            const input = block.input || {};
+                            let detail = '';
+                            if (toolName === 'Bash' && input.command) detail = `: ${input.command.slice(0, 40)}`;
+                            else if (input.file_path) detail = `: ${path.basename(input.file_path)}`;
+                            newStatus = `🛠 [${toolCount}] ${toolName}${detail}`;
+                        }
+                    }
+                }
+                if (newStatus && newStatus !== lastStatus) {
+                    lastStatus = newStatus;
+                    ctx.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined, newStatus)
+                        .catch(() => {});
+                }
+            }
+        });
+
+        clearInterval(typingInterval);
+        ctx.telegram.deleteMessage(ctx.chat.id, statusMsg.message_id).catch(() => {});
+        setReaction(ctx, null);
+
+        if (!result.text) return ctx.reply('⚠️ Response rỗng.');
+
+        const footer = `\n\n⏱ ${(result.duration / 1000).toFixed(1)}s` +
+            (result.toolsUsed.length ? ` | 🛠 ${result.toolsUsed.join(', ')}` : '');
+
+        await sendLongMessage(ctx, result.text + footer, '🤖 Claude Code');
+    } catch (err) {
+        clearInterval(typingInterval);
+        ctx.telegram.deleteMessage(ctx.chat.id, statusMsg.message_id).catch(() => {});
+        setReaction(ctx, null);
+        console.error(`❌ Claude [${chatId}]:`, err.message);
+        ctx.reply(`❌ ${err.message}`);
+    }
+}
+
+// ===== CLAUDE SESSION PICKER =====
+const handleSession = async (ctx) => {
+    if (currentEngine !== 'claude') {
+        return ctx.reply('ℹ️ Session chỉ dùng cho Claude Code engine.\nDùng /engine để chuyển.');
+    }
+    const chatId = String(ctx.chat.id);
+    const sessionsList = listSessions(CLAUDE_WORK_DIR, 5);
+    const currentSid = getLastSessionId(chatId);
+
+    const buttons = sessionsList.map(s => {
+        const prefix = s.sessionId === currentSid ? '👉 ' : '';
+        const label = `${prefix}${s.title} (${formatRelativeTime(s.mtime)})`;
+        return [Markup.button.callback(label, `cs_${s.sessionId}`)];
+    });
+    buttons.push([
+        Markup.button.callback('🆕 New', 'cs_new'),
+        Markup.button.callback('🔄 Refresh', 'cs_refresh')
+    ]);
+
+    ctx.reply(`📋 <b>Claude Sessions</b>\nCWD: <code>${CLAUDE_WORK_DIR}</code>`, {
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard(buttons)
+    });
+};
+bot.command('session', handleSession);
+bot.hears(/^📋/i, handleSession);
+
+bot.action(/^cs_(.+)$/, (ctx) => {
+    const chatId = String(ctx.chat.id);
+    const val = ctx.match[1];
+    if (val === 'new') {
+        resetSession(chatId);
+        ctx.answerCbQuery('New session');
+        ctx.editMessageText('📋 Session mới (sẽ tạo khi gửi tin nhắn).', { parse_mode: 'HTML' }).catch(() => {});
+    } else if (val === 'refresh') {
+        ctx.answerCbQuery('Refreshed');
+        handleSession(ctx).catch(() => {});
+    } else {
+        setActiveSession(chatId, val);
+        ctx.answerCbQuery(`Session: ${val.slice(0, 8)}`);
+        ctx.editMessageText(`📋 Đã chọn session: <code>${val}</code>`, { parse_mode: 'HTML' }).catch(() => {});
     }
 });
 
@@ -1665,6 +1874,40 @@ bot.hears(/^\/artifact_(\d+)$/, async (ctx) => {
 });
 
 const handleModel = async (ctx) => {
+    if (typeof currentEngine !== 'undefined' && currentEngine === 'claude') {
+        let modelName = '';
+        if (ctx.message && ctx.message.text) {
+            const parts = ctx.message.text.split(' ');
+            if (parts[0].startsWith('/')) parts.shift();
+            modelName = parts.join(' ').trim();
+            if (modelName.startsWith('🧠') || modelName.startsWith('🤖') || modelName.toLowerCase().startsWith('model:')) modelName = '';
+        }
+        
+        if (modelName) {
+            currentClaudeModel = modelName;
+            saveClaudeModel(modelName);
+            ctx.reply(`✅ Đã đổi model Claude Code thành: <b>${modelName}</b>`, { parse_mode: 'HTML' });
+            return;
+        }
+
+        const models = [
+            'opus',
+            'sonnet',
+            'haiku'
+        ];
+
+        const buttons = models.map(m => {
+            const cbData = 'cmd_' + Buffer.from(m).toString('base64').slice(0, 58);
+            return [{ text: `🤖 ${m}`, callback_data: cbData }];
+        });
+        
+        ctx.reply('🧠 <b>Chọn Model cho Claude Code:</b>\nHoặc gõ <code>/model [tên_model]</code> để đổi sang model khác.', {
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: buttons }
+        });
+        return;
+    }
+
     let modelName = '';
     if (ctx.message && ctx.message.text) {
         const parts = ctx.message.text.split(' ');
@@ -1716,7 +1959,7 @@ const handleModel = async (ctx) => {
 };
 bot.command('model', handleModel);
 
-bot.action(/md_(.+)/, async (ctx) => {
+bot.action(/^md_(.+)/, async (ctx) => {
     try {
         const modelName = Buffer.from(ctx.match[1], 'base64').toString('utf-8');
         ctx.answerCbQuery(modelName);
@@ -1731,6 +1974,18 @@ bot.action(/md_(.+)/, async (ctx) => {
         else ctx.reply(t('model.select_failed'));
     } catch(e) {
         ctx.answerCbQuery(t('model.error'));
+    }
+});
+
+bot.action(/^cmd_(.+)/, async (ctx) => {
+    try {
+        const modelName = Buffer.from(ctx.match[1], 'base64').toString('utf-8');
+        ctx.answerCbQuery(modelName);
+        currentClaudeModel = modelName;
+        saveClaudeModel(modelName);
+        await sendMainMenu(ctx, `🧠 Model Claude Code: <b>${modelName}</b> ✅`);
+    } catch (e) {
+        ctx.reply(`❌ ${e.message}`);
     }
 });
 
@@ -2949,6 +3204,11 @@ bot.action(/^ans_(.+)$/, async (ctx) => {
 });
 
 async function handleAgentQuery(ctx, query, explicitTargetId = null, explicitThreadName = null) {
+    // ---- CLAUDE CODE ENGINE ----
+    if (currentEngine === 'claude') {
+        return handleClaudeQuery(ctx, query);
+    }
+    // ---- ANTIGRAVITY ENGINE (existing) ----
     try {
         if (explicitThreadName) await switchAgentThread(CDP_PORT, explicitThreadName).catch(()=>{});
         let targetId = explicitTargetId;
@@ -3029,6 +3289,13 @@ bot.hears(/^!([a-zA-Z0-9_-]+)(?:\s+([\s\S]*))?$/, async (ctx) => {
 
 bot.on('text', (ctx) => {
     if (ctx.message.text.startsWith('/') || ctx.message.text.startsWith('!')) return;
+
+    // ---- CLAUDE CODE routing ----
+    if (currentEngine === 'claude') {
+        return handleClaudeQuery(ctx, ctx.message.text).catch(() => {});
+    }
+
+    // ---- ANTIGRAVITY routing (existing) ----
     let query = ctx.message.text;
     
     let explicitTargetId = null;
