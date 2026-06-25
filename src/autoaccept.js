@@ -18,7 +18,7 @@ let isEnabled = true;
 let heartbeatTimer = null;
 let injectedTargets = new Set();
 let totalClicks = 0;
-let sessionClicks = 0;
+let sessionClicks = {};
 let lastClickTime = 0;
 let lastClickText = '';
 
@@ -286,10 +286,7 @@ function buildObserverScript() {
 
             var key = _domPath(btn) + ':' + (btn.textContent || '').trim().toLowerCase().substring(0, 30);
             
-            // Bypass cooldown for submit so it can be clicked reliably
-            if (matchedText !== 'submit' && matchedText !== 'gönder') {
-                clickCooldowns[key] = Date.now();
-            }
+            clickCooldowns[key] = Date.now();
 
             btn.click();
             window.__AA_BOT_CLICK_COUNT = (window.__AA_BOT_CLICK_COUNT || 0) + 1;
@@ -437,10 +434,15 @@ async function heartbeat(port) {
 
                 if (health) {
                     // Update click stats
-                    if (health.clicks > sessionClicks) {
-                        const delta = health.clicks - sessionClicks;
+                    const lastTargetClicks = sessionClicks[target.id] || 0;
+                    if (health.clicks > lastTargetClicks) {
+                        const delta = health.clicks - lastTargetClicks;
                         totalClicks += delta;
-                        sessionClicks = health.clicks;
+                        sessionClicks[target.id] = health.clicks;
+                    } else if (health.clicks < lastTargetClicks) {
+                        const delta = health.clicks;
+                        totalClicks += delta;
+                        sessionClicks[target.id] = health.clicks;
                     }
 
                     // Log recent clicks
@@ -501,7 +503,7 @@ async function enable(port) {
     isEnabled = true;
 
     if (!wasEnabled) {
-        sessionClicks = 0;
+        sessionClicks = {};
     }
 
     // Clear stale target cache and inject fresh
@@ -552,10 +554,11 @@ async function disable(port) {
                     };
                 })()
             `);
-            if (health && health.clicks > sessionClicks) {
-                const delta = health.clicks - sessionClicks;
+            const lastTargetClicks = sessionClicks[target.id] || 0;
+            if (health && health.clicks > lastTargetClicks) {
+                const delta = health.clicks - lastTargetClicks;
                 totalClicks += delta;
-                sessionClicks = health.clicks;
+                sessionClicks[target.id] = health.clicks;
             }
             if (health && health.log) {
                 for (const cl of health.log) {
@@ -581,6 +584,7 @@ async function disable(port) {
                     window.__AA_BOT_FALLBACK_INTERVAL = null;
                 }
                 window.__AA_BOT_OBSERVER_ACTIVE = false;
+                window.__AA_BOT_CLICK_COUNT = 0;
                 'stopped'
             `);
         } catch (_) {}
@@ -610,7 +614,7 @@ async function getStatus(port) {
         paused: !!(status && status.paused),
         clicks: status?.clicks || 0,
         totalClicks,
-        sessionClicks,
+        sessionClicks: Object.values(sessionClicks).reduce((a, b) => a + b, 0),
         lastClickText,
         lastClickTimeSec: timeSince,
         injectedTargets: injectedTargets.size,
