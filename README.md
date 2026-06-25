@@ -44,7 +44,7 @@ DEFAULT_ENGINE=claude
 
 # Cấu hình Claude Code
 CLAUDE_BIN=claude
-CLAUDE_WORK_DIR=/Users/congdau/Projects
+CLAUDE_WORK_DIR=/path/to/projects
 CLAUDE_SKIP_PERMS=true
 CLAUDE_TIMEOUT=900000
 

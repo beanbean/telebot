@@ -8,7 +8,7 @@ const path = require('path');
 
 /**
  * Encode current directory path to Claude Code project folder format.
- * E.g., /Users/congdau/Projects -> -Users-congdau-Projects
+ * E.g., /path/to/projects -> -path-to-projects
  * @param {string} cwd
  * @returns {string}
  */
@@ -53,7 +53,7 @@ function listSessions(cwd, limit = 10) {
   const encoded = encodePath(cwd);
   if (!encoded) return [];
 
-  const homeDir = process.env.HOME || '/Users/congdau';
+  const homeDir = process.env.HOME || require('os').homedir();
   const projectsDir = path.join(homeDir, '.claude', 'projects', encoded);
 
   if (!fs.existsSync(projectsDir)) {
