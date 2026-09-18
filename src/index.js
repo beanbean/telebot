@@ -2908,9 +2908,9 @@ async function ensureModelsCache() {
         }
         if (!cachedModelsList || cachedModelsList.length === 0) {
             cachedModelsList = [
+                { name: 'Gemini 3.8 Flash', baseName: 'Gemini 3.8 Flash', hasTiers: true, tiers: ['Low', 'Medium', 'High'], currentTier: 'Medium' },
                 { name: 'Gemini 3.7 Flash', baseName: 'Gemini 3.7 Flash', hasTiers: true, tiers: ['Low', 'Medium', 'High'], currentTier: 'Medium' },
                 { name: 'Gemini 3.6 Flash', baseName: 'Gemini 3.6 Flash', hasTiers: true, tiers: ['Low', 'Medium', 'High'], currentTier: 'Medium' },
-                { name: 'Gemini 3.5 Flash', baseName: 'Gemini 3.5 Flash', hasTiers: true, tiers: ['Low', 'Medium', 'High'], currentTier: 'Medium' },
                 { name: 'Gemini 3.1 Pro', baseName: 'Gemini 3.1 Pro', hasTiers: true, tiers: ['Low', 'High'], currentTier: 'Low' },
                 { name: 'Claude Sonnet 4.6 (Thinking)', baseName: 'Claude Sonnet 4.6 (Thinking)', hasTiers: false, tiers: [] },
                 { name: 'Claude Opus 4.6 (Thinking)', baseName: 'Claude Opus 4.6 (Thinking)', hasTiers: false, tiers: [] },
@@ -3562,8 +3562,26 @@ const handleWorkspace = (ctx) => {
         const projectsDir = config.projectsDir;
         fs.readdir(projectsDir, { withFileTypes: true }, (err, files) => {
             if (err) return ctx.reply(t('workspace.read_error'));
-            const dirs = files.filter(f => f.isDirectory() && !f.name.startsWith('.')).map(f => f.name);
-            const buttons = dirs.map(d => [{ text: `📂 ${d}`, callback_data: `ws_${d}` }]);
+            const allDirs = files
+                .filter(f => (f.isDirectory() || f.isSymbolicLink()) && !f.name.startsWith('.'))
+                .map(f => f.name);
+
+            // Priority workspaces pinned to the top with a star icon
+            const priorityPatterns = ['nexmeOS', 'MentorOS', 'nexme_marathon'];
+            const pinned = [];
+            for (const p of priorityPatterns) {
+                const found = allDirs.find(d => d.toLowerCase() === p.toLowerCase() || d.replace(/[-_]/g, '').toLowerCase() === p.replace(/[-_]/g, '').toLowerCase());
+                if (found && !pinned.includes(found)) {
+                    pinned.push(found);
+                }
+            }
+
+            const remaining = allDirs.filter(d => !pinned.includes(d)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+            const buttons = [
+                ...pinned.map(d => [{ text: `⭐ ${d}`, callback_data: `ws_${d}` }]),
+                ...remaining.map(d => [{ text: `📂 ${d}`, callback_data: `ws_${d}` }])
+            ];
             
             ctx.reply(t('workspace.select_prompt'), {
                 reply_markup: { inline_keyboard: buttons }
@@ -4211,58 +4229,49 @@ bot.action(/fp_(.+)/, (ctx) => {
 
 function getMenuCommands() {
     const cmds = [
-        { command: 'help', description: t('menu.help_desc') },
-        { command: 'latest', description: t('menu.latest_desc') },
-        { command: 'screenshot', description: t('menu.screenshot_desc') },
-        { command: 'status', description: t('menu.status_desc') },
-        { command: 'start_ide', description: t('menu.start_ide_desc') || 'Start IDE' },
-        { command: 'start_ag', description: t('menu.start_ag_desc') || 'Start Agent' },
-        { command: 'close_ide', description: t('menu.close_ide_desc') || 'Close IDE' },
-        { command: 'close_ag', description: t('menu.close_ag_desc') || 'Close Agent' },
-        { command: 'new', description: t('menu.new_desc') },
-        { command: 'agents', description: t('menu.agents_desc') },
-        { command: 'artifacts', description: t('menu.artifacts_desc') },
-        { command: 'skills', description: 'Browse and search installed Agent Skills' },
-        { command: 'model', description: t('menu.model_desc') },
-        { command: 'workspace', description: t('menu.workspace_desc') },
-        { command: 'memory', description: 'Check or toggle Project Memory' },
-        { command: 'window', description: t('menu.window_desc') || 'Select IDE window' },
-        { command: 'close_window', description: t('menu.close_window_desc') || 'Close current window' },
-        { command: 'closeall', description: t('menu.closeall_desc') || 'Close all open file tabs' },
-        { command: 'lang', description: t('menu.lang_desc') },
-        { command: 'cmd', description: t('menu.cmd_desc') },
-        { command: 'file', description: t('menu.file_desc') },
-        { command: 'stop', description: t('menu.stop_desc') },
-        { command: 'autoaccept', description: t('menu.autoaccept_desc') },
-        { command: 'quota', description: t('menu.quota_desc') },
-        { command: 'update', description: t('menu.update_desc') || 'Check for updates' },
-        { command: 'force_update', description: t('menu.force_update_desc') || 'Force update (overwrites local changes)' },
-        { command: 'version', description: t('menu.version_desc') || 'Show current version' },
-        { command: 'menu', description: t('menu.menu_desc') },
-        { command: 'app', description: t('menu.app_desc') || 'Select active application' },
-        { command: 'fix_shortcuts', description: t('menu.fix_shortcuts_desc') || 'Fix desktop shortcuts' },
-        { command: 'restart', description: t('menu.restart_desc') || 'Restart the bot' },
-        { command: 'goal', description: t('menu.goal_desc') || 'Set autonomous goal for agent' },
-        { command: 'plan', description: t('menu.plan_desc') || 'Generate implementation plan' },
-        { command: 'schedule_task', description: t('menu.schedule_task_desc') || 'Schedule a task in IDE' },
-        { command: 'schedule_setup', description: t('schedule.menu_schedule_setup_desc') || 'Setup CronCrew connection' },
-        { command: 'schedule_list', description: t('schedule.menu_schedule_list_desc') || 'List scheduled tasks' },
-        { command: 'schedule_add', description: t('schedule.menu_schedule_add_desc') || 'Add a new schedule' },
-        { command: 'schedule_status', description: t('schedule.menu_schedule_status_desc') || 'Show CronCrew status' },
-        { command: 'login', description: t('menu.login_desc') || 'Sign in with Google' },
-        { command: 'accounts', description: t('menu.accounts_desc') || 'List saved Google accounts' },
-        { command: 'switchacc', description: t('menu.switchacc_desc') || 'Switch active Google account' },
-        { command: 'getinfo', description: t('menu.getinfo_desc') || 'View account quota info' },
-        { command: 'delacc', description: t('menu.delacc_desc') || 'Delete a saved Google account' },
-        { command: 'gettask', description: t('menu.gettask_desc') || 'Get the latest Task Checklist' },
-        { command: 'getplan', description: t('menu.getplan_desc') || 'Get the latest Implementation Plan' },
-        { command: 'getwalk', description: t('menu.getwalk_desc') || 'Get the latest Walkthrough' },
-        { command: 'watcher', description: t('menu.watcher_desc') || 'Toggle background Task Watcher' },
-        { command: 'telegraph', description: t('menu.telegraph_desc') || 'Toggle Telegraph artifact uploads' },
-        { command: 'cleartelegraph', description: t('menu.cleartelegraph_desc') || 'Wipe published Telegraph pages' }
+        { command: 'help', description: t('menu.help_desc') || 'Show command manual' },
+        { command: 'skills', description: 'Browse and search all skills' },
+        { command: 'model', description: t('menu.model_desc') || 'Select AI model' },
+        { command: 'workspace', description: t('menu.workspace_desc') || 'Switch workspace' },
+        { command: 'status', description: t('menu.status_desc') || 'Show bot and system status' },
+        { command: 'latest', description: t('menu.latest_desc') || 'Fetch latest agent response' },
+        { command: 'screenshot', description: t('menu.screenshot_desc') || 'Capture IDE screen' },
+        { command: 'stop', description: t('menu.stop_desc') || 'Stop current task' },
+        { command: 'new', description: t('menu.new_desc') || 'Start new chat' },
+        { command: 'restart', description: t('menu.restart_desc') || 'Restart the bot' }
     ];
 
-    return cmds.sort((a, b) => a.command.localeCompare(b.command));
+    try {
+        const home = os.homedir();
+        const customSkillsDir = path.join(home, '.gemini', 'config', 'skills');
+        if (fs.existsSync(customSkillsDir)) {
+            const entries = fs.readdirSync(customSkillsDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('_')) {
+                    const cmdName = entry.name.toLowerCase().replace(/[^a-z0-9_]/g, '_').substring(0, 32);
+                    if (!cmds.some(c => c.command === cmdName)) {
+                        let desc = `Skill ${entry.name}`;
+                        const skillMd = path.join(customSkillsDir, entry.name, 'SKILL.md');
+                        if (fs.existsSync(skillMd)) {
+                            try {
+                                const content = fs.readFileSync(skillMd, 'utf8');
+                                const match = content.match(/description:\s*([^\n\r]+)/i);
+                                if (match) desc = match[1].replace(/["']/g, '').trim();
+                            } catch (_) {}
+                        }
+                        if (desc.length > 100) desc = desc.substring(0, 97) + '...';
+                        cmds.push({
+                            command: cmdName,
+                            description: desc
+                        });
+                    }
+                }
+            }
+        }
+    } catch (_) {}
+
+    // Telegram allows max 100 commands per scope
+    return cmds.slice(0, 100);
 }
 
 /**
@@ -4645,8 +4654,42 @@ let isAgentBusy = false;
     ]);
 
     bot.on('text', async (ctx, next) => {
-        const firstWord = ctx.message.text.split(/[\s@]+/)[0].replace(/^\//, '').toLowerCase();
-        if (ctx.message.text.startsWith('/') && KNOWN_BOT_COMMANDS.has(firstWord)) {
+        const rawText = ctx.message.text.trim();
+        const firstWord = rawText.split(/[\s@]+/)[0].replace(/^\//, '').toLowerCase();
+        
+        // 1. Check if user typed a slash command that matches an installed skill (e.g. /ai-thinking, /reflect, !reflect)
+        let skillTrigger = null;
+        let skillArgs = '';
+        if (rawText.startsWith('!')) {
+            const match = rawText.match(/^!([a-zA-Z0-9_-]+)(?:\s+([\s\S]*))?$/);
+            if (match) {
+                skillTrigger = match[1].toLowerCase();
+                skillArgs = match[2] ? match[2].trim() : '';
+            }
+        } else if (rawText.startsWith('/') && !KNOWN_BOT_COMMANDS.has(firstWord)) {
+            const match = rawText.match(/^\/([a-zA-Z0-9_-]+)(?:@[\w_]+)?(?:\s+([\s\S]*))?$/);
+            if (match) {
+                skillTrigger = match[1].toLowerCase();
+                skillArgs = match[2] ? match[2].trim() : '';
+            }
+        }
+
+        if (skillTrigger) {
+            if (cachedSkillsList.length === 0) refreshSkillsCache();
+            const matchedSkill = cachedSkillsList.find(s => s.name.toLowerCase() === skillTrigger);
+            if (matchedSkill) {
+                const prompt = skillArgs ? `Use the ${matchedSkill.name} skill: ${skillArgs}` : `Use the ${matchedSkill.name} skill.`;
+                try {
+                    setReaction(ctx, REACTION.THINKING).catch(() => {});
+                    await sendViaCDPWithRecovery(prompt);
+                    return;
+                } catch (err) {
+                    return ctx.reply(t('ask.headless_error', { error: err.message }) || err.message).catch(() => {});
+                }
+            }
+        }
+
+        if (rawText.startsWith('/') && KNOWN_BOT_COMMANDS.has(firstWord)) {
             return next();
         }
     let query = ctx.message.text;
