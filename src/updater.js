@@ -13,6 +13,10 @@ const fs = require('fs');
 const https = require('https');
 const { t } = require('./i18n');
 
+function getUpdateRemote() {
+    return 'upstream';
+}
+
 const PROJECT_ROOT = path.join(__dirname, '..');
 const PACKAGE_JSON = path.join(PROJECT_ROOT, 'package.json');
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -42,17 +46,17 @@ function getLocalVersion() {
 function getRemoteCommitInfo() {
     return new Promise((resolve, reject) => {
         try {
-            // Fetch origin main so we can get the latest commit message
-            execSync('git fetch origin main', { cwd: PROJECT_ROOT, stdio: 'ignore' });
+            // Fetch ${getUpdateRemote()} main so we can get the latest commit message
+            execSync(`git fetch ${getUpdateRemote()} main`, { cwd: PROJECT_ROOT, stdio: 'ignore' });
             
-            const hash = execSync('git log -1 --format="%h" origin/main', { cwd: PROJECT_ROOT }).toString().trim();
-            const message = execSync('git log -1 --format="%s" origin/main', { cwd: PROJECT_ROOT }).toString().trim();
+            const hash = execSync(`git log -1 --format="%h" ${getUpdateRemote()}/main`, { cwd: PROJECT_ROOT }).toString().trim();
+            const message = execSync(`git log -1 --format="%s" ${getUpdateRemote()}/main`, { cwd: PROJECT_ROOT }).toString().trim();
             
             resolve({ hash, message });
         } catch(e) {
             // Fallback to ls-remote if fetch fails
             try {
-                const result = execSync('git ls-remote origin HEAD', { cwd: PROJECT_ROOT }).toString().trim();
+                const result = execSync(`git ls-remote ${getUpdateRemote()} HEAD`, { cwd: PROJECT_ROOT }).toString().trim();
                 const hash = result.split('\t')[0];
                 resolve({ hash: hash ? hash.substring(0, 7) : null, message: '' });
             } catch(e2) {
@@ -131,10 +135,10 @@ async function checkForUpdates() {
     let hasNewCommits = false;
     if (remoteCommit) {
         try {
-            // Check if origin/main is already merged into HEAD (ancestor of HEAD)
-            execSync('git merge-base --is-ancestor origin/main HEAD', { cwd: PROJECT_ROOT });
+            // Check if ${getUpdateRemote()}/main is already merged into HEAD (ancestor of HEAD)
+            execSync(`git merge-base --is-ancestor ${getUpdateRemote()}/main HEAD`, { cwd: PROJECT_ROOT });
         } catch (_) {
-            // If the command fails, origin/main is not an ancestor, so we have new commits
+            // If the command fails, ${getUpdateRemote()}/main is not an ancestor, so we have new commits
             hasNewCommits = true;
         }
     }
@@ -156,7 +160,7 @@ async function checkForUpdates() {
  * Returns a promise that resolves with the update result message.
  * @param {Function} onRestartFail - Callback if pm2 restart fails
  * @param {Object} [options] - Options object
- * @param {boolean} [options.force=false] - If true, force resets local repository to origin/main
+ * @param {boolean} [options.force=false] - If true, force resets local repository to ${getUpdateRemote()}/main
  */
 function performUpdate(onRestartFail, options = {}) {
     const force = typeof options === 'object' && !!options.force;
@@ -165,7 +169,7 @@ function performUpdate(onRestartFail, options = {}) {
         const isWatchdog = process.env.WATCHDOG === 'true';
         if (!pmId && !isWatchdog) {
             const manualCmd = force
-                ? `cd ${PROJECT_ROOT} && git fetch origin main && git reset --hard origin/main && npm install`
+                ? `cd ${PROJECT_ROOT} && git fetch ${getUpdateRemote()} main && git reset --hard ${getUpdateRemote()}/main && npm install`
                 : `cd ${PROJECT_ROOT} && git pull && npm install`;
             return reject(new Error(`Not running under PM2 or Watchdog. Please update manually:\n\`${manualCmd}\``));
         }
@@ -194,8 +198,8 @@ function performUpdate(onRestartFail, options = {}) {
         };
 
         if (force) {
-            // Step 1: Fetch origin main
-            exec('git fetch origin main', { cwd: PROJECT_ROOT }, (fetchErr) => {
+            // Step 1: Fetch ${getUpdateRemote()} main
+            exec(`git fetch ${getUpdateRemote()} main`, { cwd: PROJECT_ROOT }, (fetchErr) => {
                 if (fetchErr) return reject(new Error(`git fetch failed: ${fetchErr.message}`));
 
                 // Abort any merge in progress
@@ -203,8 +207,8 @@ function performUpdate(onRestartFail, options = {}) {
                     execSync('git merge --abort', { cwd: PROJECT_ROOT, stdio: 'ignore' });
                 } catch (_) {}
 
-                // Step 2: Hard reset to origin/main
-                exec('git reset --hard origin/main', { cwd: PROJECT_ROOT }, (resetErr) => {
+                // Step 2: Hard reset to ${getUpdateRemote()}/main
+                exec(`git reset --hard ${getUpdateRemote()}/main`, { cwd: PROJECT_ROOT }, (resetErr) => {
                     if (resetErr) return reject(new Error(`git reset failed: ${resetErr.message}`));
 
                     // Step 3: Run npm install
@@ -219,7 +223,7 @@ function performUpdate(onRestartFail, options = {}) {
 
         // Standard update flow:
         // Step 1: Check if package.json will change before we merge
-        exec('git fetch origin main && git diff --name-only HEAD origin/main', { cwd: PROJECT_ROOT }, (err, stdout) => {
+        exec(`git fetch ${getUpdateRemote()} main && git diff --name-only HEAD ${getUpdateRemote()}/main`, { cwd: PROJECT_ROOT }, (err, stdout) => {
             if (err) return reject(new Error(`git fetch failed: ${err.message}`));
             
             const diffOutput = stdout.trim();
@@ -238,7 +242,7 @@ function performUpdate(onRestartFail, options = {}) {
             }
 
             // Step 3: Try to merge updates from the developer's main branch instead of discarding corrections with reset --hard
-            exec('git merge origin/main -m "Merge updates from developer"', { cwd: PROJECT_ROOT }, (err2, mergeOut) => {
+            exec(`git merge ${getUpdateRemote()}/main -m "Merge updates from developer"`, { cwd: PROJECT_ROOT }, (err2, mergeOut) => {
                 if (err2) {
                     // Merge failed (e.g., conflicts) -> abort the merge and restore stash
                     try {
@@ -295,7 +299,7 @@ function startUpdateChecker(bot, chatIds) {
             const updateFlagPath = path.join(PROJECT_ROOT, '.update_flag');
             if (fs.existsSync(updateFlagPath)) {
                 const pmId = process.env.pm_id || 'antigravity-telegram-suite';
-                const stuckMsg = `⚠️ <b>[Auto-Update]</b> Update loop detected!\n\nThe bot downloaded an update but failed to restart automatically (PM2 may be missing from PATH or process not managed by PM2).\n\n<b>To fix this, please run manually on your server:</b>\n<code>git merge --abort</code>\n<code>git reset --hard origin/main</code>\n<code>npm install</code>\n<code>pm2 restart ${pmId}</code>`;
+                const stuckMsg = `⚠️ <b>[Auto-Update]</b> Update loop detected!\n\nThe bot downloaded an update but failed to restart automatically (PM2 may be missing from PATH or process not managed by PM2).\n\n<b>To fix this, please run manually on your server:</b>\n<code>git merge --abort</code>\n<code>git reset --hard ${getUpdateRemote()}/main</code>\n<code>npm install</code>\n<code>pm2 restart ${pmId}</code>`;
                 for (const chatId of chatIds) {
                     await bot.telegram.sendMessage(chatId, stuckMsg, { parse_mode: 'HTML' }).catch(() => {});
                 }

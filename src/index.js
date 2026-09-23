@@ -7,7 +7,10 @@ const http = require('http');
 const https = require('https');
 const { exec } = require('child_process');
 const { loadLocale, t, getLang } = require('./i18n');
-const { config, isIDERunning, killIDE, cleanLockFile, launchIDE, getLastWorkspace, trustWorkspaceViaCDP, PLATFORM } = require('./platform');
+const { config, isIDERunning, killIDE, cleanLockFile, launchIDE, getLastWorkspace, trustWorkspaceViaCDP, initCaffeinate, startCaffeinate, stopCaffeinate, isCaffeinateActive, getCaffeinatePid, PLATFORM } = require('./platform');
+
+// Initialize sleep prevention on macOS if enabled in .env
+initCaffeinate();
 const { isAgentWorking, getFullLatestResponse, snapshotChatState, captureAgentScreenshot, captureFullIDEScreenshot, waitForAgentResponse, sendViaCDP, clickArtifactButton, triggerNewChat, triggerModelMenu, getAvailableModels, selectModel, getCurrentModel, stopAgent, getQuota, listWindows, setPreferredWindow, getPreferredWindow, getPreferredTargetId, getCachedWindows, closeWindow, closeAllEditors, listAgentThreads, switchAgentThread, getActiveThreadId, getActiveThreadInfo, setActiveWorkspace, switchStandaloneWorkspace, getLastResolvedThreadId, setLastResolvedThreadId, setOnThreadResolved } = require('./cdp_controller');
 const autoaccept = require('./autoaccept');
 const updater = require('./updater');
@@ -1029,6 +1032,11 @@ const handleStatus = async (ctx) => {
     }
 
     msg += '\n🛡️ <b>Auto-Accept:</b> ' + (autoaccept.isEnabled ? t('status.autoaccept_on') : t('status.autoaccept_off')) + '\n';
+    if (PLATFORM === 'darwin') {
+        const isCaff = isCaffeinateActive();
+        const pid = getCaffeinatePid();
+        msg += '☕ <b>Caffeinate:</b> ' + (isCaff ? t('status.caffeinate_on', { pid: pid || process.pid }) : t('status.caffeinate_off')) + '\n';
+    }
 
     ctx.reply(msg, { parse_mode: 'HTML' });
 };
@@ -2272,6 +2280,112 @@ bot.action('telegraph_status', async (ctx) => {
         ];
         await ctx.editMessageText(msg, { parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } }).catch(() => {});
     } catch (e) {}
+});
+
+const handleCaffeinate = async (ctx) => {
+    try {
+        if (PLATFORM !== 'darwin') {
+            return ctx.reply(t('caffeinate.macos_only'));
+        }
+        const text = (ctx.message?.text || '').trim();
+        const parts = text.split(/\s+/);
+        if (parts.length > 1) {
+            const arg = parts[1].toLowerCase();
+            if (arg === 'on' || arg === 'enable' || arg === '1' || arg === 'true') {
+                process.env.ENABLE_CAFFEINATE = 'true';
+                startCaffeinate();
+                return ctx.reply(t('caffeinate.activated', { pid: getCaffeinatePid() || process.pid }));
+            } else if (arg === 'off' || arg === 'disable' || arg === '0' || arg === 'false') {
+                process.env.ENABLE_CAFFEINATE = 'false';
+                stopCaffeinate();
+                return ctx.reply(t('caffeinate.deactivated'));
+            }
+        }
+
+        const isActive = isCaffeinateActive();
+        const pid = getCaffeinatePid();
+        const stateStr = isActive ? t('caffeinate.state_on', { pid: pid || process.pid }) : t('caffeinate.state_off');
+        const msg = t('caffeinate.status', { state: stateStr });
+        const buttons = [
+            [
+                {
+                    text: isActive ? t('caffeinate.btn_turn_off') : t('caffeinate.btn_turn_on'),
+                    callback_data: 'caffeinate_toggle'
+                }
+            ],
+            [
+                { text: '🔄 ' + (t('menu.btn_status') || 'Status'), callback_data: 'caffeinate_status' }
+            ]
+        ];
+        return ctx.reply(msg, { parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } });
+    } catch (e) {
+        ctx.reply('❌ Error: ' + e.message);
+    }
+};
+
+bot.command('caffeinate', handleCaffeinate);
+
+bot.action('caffeinate_toggle', async (ctx) => {
+    try {
+        if (PLATFORM !== 'darwin') {
+            return ctx.answerCbQuery(t('caffeinate.macos_only'));
+        }
+        const currentlyActive = isCaffeinateActive();
+        if (currentlyActive) {
+            process.env.ENABLE_CAFFEINATE = 'false';
+            stopCaffeinate();
+            await ctx.answerCbQuery(t('caffeinate.deactivated_cb'));
+        } else {
+            process.env.ENABLE_CAFFEINATE = 'true';
+            startCaffeinate();
+            await ctx.answerCbQuery(t('caffeinate.activated_cb'));
+        }
+        const isActive = isCaffeinateActive();
+        const pid = getCaffeinatePid();
+        const stateStr = isActive ? t('caffeinate.state_on', { pid: pid || process.pid }) : t('caffeinate.state_off');
+        const msg = t('caffeinate.status', { state: stateStr });
+        const buttons = [
+            [
+                {
+                    text: isActive ? t('caffeinate.btn_turn_off') : t('caffeinate.btn_turn_on'),
+                    callback_data: 'caffeinate_toggle'
+                }
+            ],
+            [
+                { text: '🔄 ' + (t('menu.btn_status') || 'Status'), callback_data: 'caffeinate_status' }
+            ]
+        ];
+        await ctx.editMessageText(msg, { parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } }).catch(() => {});
+    } catch (e) {
+        ctx.reply('❌ Error toggling Caffeinate: ' + e.message);
+    }
+});
+
+bot.action('caffeinate_status', async (ctx) => {
+    try {
+        if (PLATFORM !== 'darwin') {
+            return ctx.answerCbQuery(t('caffeinate.macos_only'));
+        }
+        const isActive = isCaffeinateActive();
+        const pid = getCaffeinatePid();
+        const stateStr = isActive ? t('caffeinate.state_on', { pid: pid || process.pid }) : t('caffeinate.state_off');
+        const msg = t('caffeinate.status', { state: stateStr });
+        const buttons = [
+            [
+                {
+                    text: isActive ? t('caffeinate.btn_turn_off') : t('caffeinate.btn_turn_on'),
+                    callback_data: 'caffeinate_toggle'
+                }
+            ],
+            [
+                { text: '🔄 ' + (t('menu.btn_status') || 'Status'), callback_data: 'caffeinate_status' }
+            ]
+        ];
+        await ctx.editMessageText(msg, { parse_mode: 'HTML', reply_markup: { inline_keyboard: buttons } }).catch(() => {});
+        await ctx.answerCbQuery();
+    } catch (e) {
+        ctx.reply('❌ Error: ' + e.message);
+    }
 });
 
 const handleArtifacts = async (ctx) => {
@@ -4233,16 +4347,58 @@ bot.action(/fp_(.+)/, (ctx) => {
 
 function getMenuCommands() {
     const cmds = [
-        { command: 'help', description: t('menu.help_desc') || 'Show command manual' },
-        { command: 'skills', description: 'Browse and search all skills' },
-        { command: 'model', description: t('menu.model_desc') || 'Select AI model' },
-        { command: 'workspace', description: t('menu.workspace_desc') || 'Switch workspace' },
-        { command: 'status', description: t('menu.status_desc') || 'Show bot and system status' },
-        { command: 'latest', description: t('menu.latest_desc') || 'Fetch latest agent response' },
-        { command: 'screenshot', description: t('menu.screenshot_desc') || 'Capture IDE screen' },
+        { command: 'start', description: t('menu.start_desc') || 'Start' },
         { command: 'stop', description: t('menu.stop_desc') || 'Stop current task' },
-        { command: 'new', description: t('menu.new_desc') || 'Start new chat' },
-        { command: 'restart', description: t('menu.restart_desc') || 'Restart the bot' }
+        { command: 'close', description: t('menu.close_desc') || 'Close current chat' },
+        { command: 'help', description: t('menu.help_desc') },
+        { command: 'latest', description: t('menu.latest_desc') },
+        { command: 'screenshot', description: t('menu.screenshot_desc') },
+        { command: 'status', description: t('menu.status_desc') },
+        { command: 'start_ide', description: t('menu.start_ide_desc') || 'Start IDE' },
+        { command: 'start_ag', description: t('menu.start_ag_desc') || 'Start Agent' },
+        { command: 'close_ide', description: t('menu.close_ide_desc') || 'Close IDE' },
+        { command: 'close_ag', description: t('menu.close_ag_desc') || 'Close Agent' },
+        { command: 'new', description: t('menu.new_desc') },
+        { command: 'agents', description: t('menu.agents_desc') },
+        { command: 'artifacts', description: t('menu.artifacts_desc') },
+        { command: 'skills', description: 'Browse and search installed Agent Skills' },
+        { command: 'model', description: t('menu.model_desc') },
+        { command: 'workspace', description: t('menu.workspace_desc') },
+        { command: 'memory', description: 'Check or toggle Project Memory' },
+        { command: 'window', description: t('menu.window_desc') || 'Select IDE window' },
+        { command: 'close_window', description: t('menu.close_window_desc') || 'Close current window' },
+        { command: 'closeall', description: t('menu.closeall_desc') || 'Close all open file tabs' },
+        { command: 'lang', description: t('menu.lang_desc') },
+        { command: 'cmd', description: t('menu.cmd_desc') },
+        { command: 'file', description: t('menu.file_desc') },
+        { command: 'autoaccept', description: t('menu.autoaccept_desc') },
+        { command: 'quota', description: t('menu.quota_desc') },
+        { command: 'update', description: t('menu.update_desc') || 'Check for updates' },
+        { command: 'force_update', description: t('menu.force_update_desc') || 'Force update (overwrites local changes)' },
+        { command: 'version', description: t('menu.version_desc') || 'Show current version' },
+        { command: 'menu', description: t('menu.menu_desc') },
+        { command: 'app', description: t('menu.app_desc') || 'Select active application' },
+        { command: 'fix_shortcuts', description: t('menu.fix_shortcuts_desc') || 'Fix desktop shortcuts' },
+        { command: 'restart', description: t('menu.restart_desc') || 'Restart the bot' },
+        { command: 'goal', description: t('menu.goal_desc') || 'Set autonomous goal for agent' },
+        { command: 'plan', description: t('menu.plan_desc') || 'Generate implementation plan' },
+        { command: 'schedule_task', description: t('menu.schedule_task_desc') || 'Schedule a task in IDE' },
+        { command: 'schedule_setup', description: t('schedule.menu_schedule_setup_desc') || 'Setup CronCrew connection' },
+        { command: 'schedule_list', description: t('schedule.menu_schedule_list_desc') || 'List scheduled tasks' },
+        { command: 'schedule_add', description: t('schedule.menu_schedule_add_desc') || 'Add a new schedule' },
+        { command: 'schedule_status', description: t('schedule.menu_schedule_status_desc') || 'Show CronCrew status' },
+        { command: 'login', description: t('menu.login_desc') || 'Sign in with Google' },
+        { command: 'accounts', description: t('menu.accounts_desc') || 'List saved Google accounts' },
+        { command: 'switchacc', description: t('menu.switchacc_desc') || 'Switch active Google account' },
+        { command: 'getinfo', description: t('menu.getinfo_desc') || 'View account quota info' },
+        { command: 'delacc', description: t('menu.delacc_desc') || 'Delete a saved Google account' },
+        { command: 'gettask', description: t('menu.gettask_desc') || 'Get the latest Task Checklist' },
+        { command: 'getplan', description: t('menu.getplan_desc') || 'Get the latest Implementation Plan' },
+        { command: 'getwalk', description: t('menu.getwalk_desc') || 'Get the latest Walkthrough' },
+        { command: 'watcher', description: t('menu.watcher_desc') || 'Toggle background Task Watcher' },
+        { command: 'telegraph', description: t('menu.telegraph_desc') || 'Toggle Telegraph artifact uploads' },
+        { command: 'cleartelegraph', description: t('menu.cleartelegraph_desc') || 'Wipe published Telegraph pages' },
+        { command: 'caffeinate', description: t('menu.caffeinate_desc') || 'Toggle macOS sleep prevention' }
     ];
 
     try {

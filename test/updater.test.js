@@ -46,7 +46,7 @@ console.log('🧪 Running updater tests...');
             await performForceUpdate();
             assert.fail('performForceUpdate should reject when not running in PM2/watchdog');
         } catch (err) {
-            assert.ok(err.message.includes('git reset --hard origin/main'), 'Should suggest force manual update');
+            assert.ok(err.message.includes('git reset --hard upstream/main'), 'Should suggest force manual update');
         }
 
         if (origPmId) process.env.pm_id = origPmId;

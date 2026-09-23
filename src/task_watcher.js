@@ -26,7 +26,7 @@ class TaskWatcher {
         this.activeConversationId = null;
         this.debounceTimer = null;
         this.DEBOUNCE_MS = 5000; // Wait 5s of silence before reading new content
-        this.enabled = true;
+        this.enabled = process.env.ENABLE_TASK_WATCHER === 'true';
     }
 
     /**
