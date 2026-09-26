@@ -4301,6 +4301,8 @@ function getMenuCommands() {
         { command: 'start', description: t('menu.start_desc') || 'Start' },
         { command: 'stop', description: t('menu.stop_desc') || 'Stop current task' },
         { command: 'close', description: t('menu.close_desc') || 'Close current chat' },
+        { command: 'start_ide', description: t('menu.start_ide_desc') || 'Start IDE' },
+        { command: 'close_ide', description: t('menu.close_ide_desc') || 'Close IDE' },
         { command: 'help', description: t('menu.help_desc') || 'Help & command overview' },
         { command: 'status', description: t('menu.status_desc') || 'System & bot status' },
         { command: 'screenshot', description: t('menu.screenshot_desc') || 'Capture IDE screen' },
