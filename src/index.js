@@ -4393,25 +4393,23 @@ async function setMenuOnAllScopes() {
     loadLocale(originalLang);
     const cmds = getMenuCommands();
     
-    // 1. Default fallback scope (applies to all users/languages)
-    await bot.telegram.callApi('setMyCommands', { commands: cmds }).catch(e => {
-        console.error('[setMenuOnAllScopes] setMyCommands default error:', e.message);
-    });
-    
-    // 2. Private chats scope
-    await bot.telegram.callApi('setMyCommands', { commands: cmds, scope: { type: 'all_private_chats' } }).catch(e => {
-        console.error('[setMenuOnAllScopes] setMyCommands private error:', e.message);
-    });
-
-    // 3. User-specific chat scope for ALLOWED_CHAT_IDS
+    const scopes = [
+        { scope: { type: 'default' } },
+        { scope: { type: 'all_private_chats' } }
+    ];
     for (const chat_id of ALLOWED_CHAT_IDS) {
-        const paramsChat = { 
-            commands: cmds, 
-            scope: { type: 'chat', chat_id: parseInt(chat_id) } 
-        };
-        await bot.telegram.callApi('setMyCommands', paramsChat).catch(e => {
-            console.error('[setMenuOnAllScopes] setMyCommands chat error:', e.message);
-        });
+        scopes.push({ scope: { type: 'chat', chat_id: parseInt(chat_id) } });
+    }
+
+    // Register without language_code (global fallback) as well as explicitly for en and vi
+    for (const langCode of [null, 'en', 'vi']) {
+        for (const s of scopes) {
+            const params = { commands: cmds, ...s };
+            if (langCode) params.language_code = langCode;
+            await bot.telegram.callApi('setMyCommands', params).catch(e => {
+                console.error(`[setMenuOnAllScopes] error lang=${langCode} scope=${s.scope.type}:`, e.message);
+            });
+        }
     }
 }
 
