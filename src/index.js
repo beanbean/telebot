@@ -2968,7 +2968,10 @@ bot.command('skill', async (ctx) => {
 
         if (cachedSkillsList.length === 0) refreshSkillsCache();
         
-        const skill = cachedSkillsList.find(s => s.name.toLowerCase() === skillName);
+        const skill = cachedSkillsList.find(s => {
+            const sName = s.name.toLowerCase();
+            return sName === skillName || sName.replace(/[^a-z0-9_]/g, '_') === skillName || sName.replace(/-/g, '_') === skillName;
+        });
         if (!skill) {
             // Fuzzy search
             const matches = cachedSkillsList.filter(s => s.name.toLowerCase().includes(skillName));
@@ -4293,58 +4296,21 @@ bot.action(/fp_(.+)/, (ctx) => {
 // ===== MENU REGISTRATION =====
 
 function getMenuCommands() {
+    // Keep essential bot controls at the top of the slash autocomplete menu
     const cmds = [
         { command: 'start', description: t('menu.start_desc') || 'Start' },
         { command: 'stop', description: t('menu.stop_desc') || 'Stop current task' },
         { command: 'close', description: t('menu.close_desc') || 'Close current chat' },
-        { command: 'help', description: t('menu.help_desc') },
-        { command: 'latest', description: t('menu.latest_desc') },
-        { command: 'screenshot', description: t('menu.screenshot_desc') },
-        { command: 'status', description: t('menu.status_desc') },
-        { command: 'start_ide', description: t('menu.start_ide_desc') || 'Start IDE' },
-        { command: 'start_ag', description: t('menu.start_ag_desc') || 'Start Agent' },
-        { command: 'close_ide', description: t('menu.close_ide_desc') || 'Close IDE' },
-        { command: 'close_ag', description: t('menu.close_ag_desc') || 'Close Agent' },
-        { command: 'new', description: t('menu.new_desc') },
-        { command: 'agents', description: t('menu.agents_desc') },
-        { command: 'artifacts', description: t('menu.artifacts_desc') },
+        { command: 'help', description: t('menu.help_desc') || 'Help & command overview' },
+        { command: 'status', description: t('menu.status_desc') || 'System & bot status' },
+        { command: 'screenshot', description: t('menu.screenshot_desc') || 'Capture IDE screen' },
+        { command: 'new', description: t('menu.new_desc') || 'New conversation thread' },
+        { command: 'model', description: t('menu.model_desc') || 'Select AI model' },
         { command: 'skills', description: 'Browse and search installed Agent Skills' },
-        { command: 'model', description: t('menu.model_desc') },
-        { command: 'workspace', description: t('menu.workspace_desc') },
-        { command: 'memory', description: 'Check or toggle Project Memory' },
-        { command: 'window', description: t('menu.window_desc') || 'Select IDE window' },
-        { command: 'close_window', description: t('menu.close_window_desc') || 'Close current window' },
-        { command: 'closeall', description: t('menu.closeall_desc') || 'Close all open file tabs' },
-        { command: 'lang', description: t('menu.lang_desc') },
-        { command: 'cmd', description: t('menu.cmd_desc') },
-        { command: 'file', description: t('menu.file_desc') },
-        { command: 'autoaccept', description: t('menu.autoaccept_desc') },
-        { command: 'quota', description: t('menu.quota_desc') },
-        { command: 'update', description: t('menu.update_desc') || 'Check for updates' },
-        { command: 'force_update', description: t('menu.force_update_desc') || 'Force update (overwrites local changes)' },
-        { command: 'version', description: t('menu.version_desc') || 'Show current version' },
-        { command: 'menu', description: t('menu.menu_desc') },
-        { command: 'app', description: t('menu.app_desc') || 'Select active application' },
-        { command: 'fix_shortcuts', description: t('menu.fix_shortcuts_desc') || 'Fix desktop shortcuts' },
+        { command: 'workspace', description: t('menu.workspace_desc') || 'Select active workspace' },
+        { command: 'autoaccept', description: t('menu.autoaccept_desc') || 'Toggle tool auto-accept' },
+        { command: 'menu', description: t('menu.menu_desc') || 'Update slash command menu' },
         { command: 'restart', description: t('menu.restart_desc') || 'Restart the bot' },
-        { command: 'goal', description: t('menu.goal_desc') || 'Set autonomous goal for agent' },
-        { command: 'plan', description: t('menu.plan_desc') || 'Generate implementation plan' },
-        { command: 'schedule_task', description: t('menu.schedule_task_desc') || 'Schedule a task in IDE' },
-        { command: 'schedule_setup', description: t('schedule.menu_schedule_setup_desc') || 'Setup CronCrew connection' },
-        { command: 'schedule_list', description: t('schedule.menu_schedule_list_desc') || 'List scheduled tasks' },
-        { command: 'schedule_add', description: t('schedule.menu_schedule_add_desc') || 'Add a new schedule' },
-        { command: 'schedule_status', description: t('schedule.menu_schedule_status_desc') || 'Show CronCrew status' },
-        { command: 'login', description: t('menu.login_desc') || 'Sign in with Google' },
-        { command: 'accounts', description: t('menu.accounts_desc') || 'List saved Google accounts' },
-        { command: 'switchacc', description: t('menu.switchacc_desc') || 'Switch active Google account' },
-        { command: 'getinfo', description: t('menu.getinfo_desc') || 'View account quota info' },
-        { command: 'delacc', description: t('menu.delacc_desc') || 'Delete a saved Google account' },
-        { command: 'gettask', description: t('menu.gettask_desc') || 'Get the latest Task Checklist' },
-        { command: 'getplan', description: t('menu.getplan_desc') || 'Get the latest Implementation Plan' },
-        { command: 'getwalk', description: t('menu.getwalk_desc') || 'Get the latest Walkthrough' },
-        { command: 'watcher', description: t('menu.watcher_desc') || 'Toggle background Task Watcher' },
-        { command: 'telegraph', description: t('menu.telegraph_desc') || 'Toggle Telegraph artifact uploads' },
-        { command: 'cleartelegraph', description: t('menu.cleartelegraph_desc') || 'Wipe published Telegraph pages' },
         { command: 'caffeinate', description: t('menu.caffeinate_desc') || 'Toggle macOS sleep prevention' }
     ];
 
@@ -4361,12 +4327,12 @@ function getMenuCommands() {
                         const skillMd = path.join(customSkillsDir, entry.name, 'SKILL.md');
                         if (fs.existsSync(skillMd)) {
                             try {
-                                const content = fs.readFileSync(skillMd, 'utf8');
-                                const match = content.match(/description:\s*([^\n\r]+)/i);
-                                if (match) desc = match[1].replace(/["']/g, '').trim();
+                                const fileContent = fs.readFileSync(skillMd, 'utf8');
+                                const extracted = extractSkillDescription(fileContent);
+                                if (extracted) desc = extracted;
                             } catch (_) {}
                         }
-                        if (desc.length > 100) desc = desc.substring(0, 97) + '...';
+                        if (desc.length > 55) desc = desc.substring(0, 52) + '...';
                         cmds.push({
                             command: cmdName,
                             description: desc
@@ -4377,8 +4343,8 @@ function getMenuCommands() {
         }
     } catch (_) {}
 
-    // Telegram allows max 100 commands per scope
-    return cmds.slice(0, 100);
+    // Telegram allows max 98 commands per scope (rejects with BOT_COMMANDS_TOO_MUCH at 99+)
+    return cmds.slice(0, 95);
 }
 
 /**
@@ -4421,50 +4387,30 @@ async function clearAllMenuScopes() {
  * We register menus for all available languages ('en', 'tr') plus the default.
  */
 async function setMenuOnAllScopes() {
-    const langs = fs.readdirSync(path.join(__dirname, '..', 'locales'))
-        .filter(f => f.endsWith('.json'))
-        .map(f => f.replace('.json', ''));
-    const defaultLang = process.env.LANGUAGE || 'en';
-    const originalLang = getLang(); // Save the user's active language
-
-    // Helper to register commands for a specific language and scope
-    const register = async (langCode) => {
-        // Temporarily load this locale to generate translated commands
-        loadLocale(langCode);
-        const cmds = getMenuCommands();
-        
-        const paramsDefault = { commands: cmds };
-        const paramsPrivate = { commands: cmds, scope: { type: 'all_private_chats' } };
-        
-        // If it's not the default fallback, specify the language_code so Telegram routes it natively
-        if (langCode !== defaultLang) {
-            paramsDefault.language_code = langCode;
-            paramsPrivate.language_code = langCode;
-        }
-
-        await bot.telegram.callApi('setMyCommands', paramsDefault).catch(()=>{});
-        await bot.telegram.callApi('setMyCommands', paramsPrivate).catch(()=>{});
-
-        if (langCode === originalLang) {
-            for (const chat_id of ALLOWED_CHAT_IDS) {
-                const paramsChat = { 
-                    commands: cmds, 
-                    scope: { type: 'chat', chat_id: parseInt(chat_id) } 
-                };
-                await bot.telegram.callApi('setMyCommands', paramsChat).catch(()=>{});
-            }
-        }
-    };
-
-    // 1. Register the non-default languages (e.g. 'en')
-    for (const l of langs) {
-        if (l !== defaultLang) await register(l);
-    }
-    // 2. Register the default fallback language last (no language_code)
-    await register(defaultLang);
-    
-    // 3. Restore the original active language
+    const originalLang = getLang();
     loadLocale(originalLang);
+    const cmds = getMenuCommands();
+    
+    // 1. Default fallback scope (applies to all users/languages)
+    await bot.telegram.callApi('setMyCommands', { commands: cmds }).catch(e => {
+        console.error('[setMenuOnAllScopes] setMyCommands default error:', e.message);
+    });
+    
+    // 2. Private chats scope
+    await bot.telegram.callApi('setMyCommands', { commands: cmds, scope: { type: 'all_private_chats' } }).catch(e => {
+        console.error('[setMenuOnAllScopes] setMyCommands private error:', e.message);
+    });
+
+    // 3. User-specific chat scope for ALLOWED_CHAT_IDS
+    for (const chat_id of ALLOWED_CHAT_IDS) {
+        const paramsChat = { 
+            commands: cmds, 
+            scope: { type: 'chat', chat_id: parseInt(chat_id) } 
+        };
+        await bot.telegram.callApi('setMyCommands', paramsChat).catch(e => {
+            console.error('[setMenuOnAllScopes] setMyCommands chat error:', e.message);
+        });
+    }
 }
 
 bot.command('menu', async (ctx) => {
@@ -4783,7 +4729,10 @@ let isAgentBusy = false;
 
         if (skillTrigger) {
             if (cachedSkillsList.length === 0) refreshSkillsCache();
-            const matchedSkill = cachedSkillsList.find(s => s.name.toLowerCase() === skillTrigger);
+            const matchedSkill = cachedSkillsList.find(s => {
+                const sName = s.name.toLowerCase();
+                return sName === skillTrigger || sName.replace(/[^a-z0-9_]/g, '_') === skillTrigger || sName.replace(/-/g, '_') === skillTrigger;
+            });
             if (matchedSkill) {
                 const prompt = skillArgs ? `Use the ${matchedSkill.name} skill: ${skillArgs}` : `Use the ${matchedSkill.name} skill.`;
                 try {
