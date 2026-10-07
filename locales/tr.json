@@ -139,6 +139,7 @@
     "expired": "❌ Oturum süresi doldu, /file yazarak tekrar başlatın."
   },
   "menu": {
+    "start_desc": "Botu başlat",
     "updated": "✅ Menü güncellendi! Sol alttaki ☰ menüsünden görebilirsiniz.",
     "help_desc": "Tüm komutların listesini gösterir",
     "ask_desc": "Sorunuzu ajana iletir",

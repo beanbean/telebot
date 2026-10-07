@@ -166,6 +166,7 @@
     "title": "📝 최신 응답:\n\n"
   },
   "menu": {
+    "start_desc": "봇 시작",
     "agents_desc": "최근 채팅 스레드 목록 및 전환",
     "app_desc": "활성 애플리케이션 선택",
     "artifacts_desc": "현재 스레드의 아티팩트 목록",

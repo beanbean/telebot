@@ -139,6 +139,7 @@
     "expired": "❌ 会话已过期，请输入 /file 重新开始。"
   },
   "menu": {
+    "start_desc": "启动机器人",
     "updated": "✅ 菜单已更新！你可以从左下角 ☰ 菜单看到它。",
     "help_desc": "显示所有可用命令",
     "ask_desc": "向 Agent 发送问题",

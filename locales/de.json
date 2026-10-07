@@ -139,6 +139,7 @@
     "expired": "❌ Sitzung abgelaufen, tippe /file, um neu zu starten."
   },
   "menu": {
+    "start_desc": "Bot starten",
     "updated": "✅ Menü aktualisiert! Du findest es über das ☰-Menü unten links.",
     "help_desc": "Zeigt alle verfügbaren Befehle an",
     "ask_desc": "Stelle dem Agenten eine Frage",

@@ -139,6 +139,7 @@
     "expired": "❌ La sesión ha expirado, escribe /file para empezar de nuevo."
   },
   "menu": {
+    "start_desc": "Iniciar el bot",
     "updated": "✅ ¡Menú actualizado! Puedes verlo desde el botón ☰ abajo a la izquierda.",
     "help_desc": "Muestra todos los comandos disponibles",
     "ask_desc": "Enviar una pregunta al agente",

@@ -139,6 +139,7 @@
     "expired": "❌ Session expired, type /file to start again."
   },
   "menu": {
+    "start_desc": "Start the bot",
     "updated": "✅ Menu updated! You can see it from the ☰ menu at the bottom left.",
     "help_desc": "Show all available commands",
     "ask_desc": "Send a question to the agent",
