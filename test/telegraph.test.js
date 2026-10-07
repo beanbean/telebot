@@ -1,6 +1,45 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const https = require('https');
+const { EventEmitter } = require('events');
+const testHome = fs.mkdtempSync(path.join(os.tmpdir(), 'telegraph-test-home-'));
+const originalHomedir = os.homedir;
+const originalRequest = https.request;
+os.homedir = () => testHome;
+https.request = (options, callback) => {
+    const request = new EventEmitter();
+    let body = '';
+    request.write = chunk => { body += chunk; };
+    request.destroy = () => {};
+    request.end = () => {
+        const payload = JSON.parse(body);
+        let result;
+        if (options.path === '/createAccount') {
+            result = { access_token: 'test-only-account' };
+        } else if (options.path === '/createPage') {
+            const pagePath = payload.title + '-10-07';
+            result = { path: pagePath, url: 'https://graph.org/' + pagePath };
+        } else if (options.path === '/editPage') {
+            result = { path: payload.path, url: 'https://graph.org/' + payload.path };
+        } else {
+            throw new Error('Unexpected Telegraph test endpoint: ' + options.path);
+        }
+        const response = new EventEmitter();
+        response.setEncoding = () => {};
+        callback(response);
+        queueMicrotask(() => {
+            response.emit('data', JSON.stringify({ ok: true, result }));
+            response.emit('end');
+        });
+    };
+    return request;
+};
+process.once('exit', () => {
+    os.homedir = originalHomedir;
+    https.request = originalRequest;
+    fs.rmSync(testHome, { recursive: true, force: true });
+});
 const telegraph = require('../src/telegraph_publisher');
 
 function printResult(name, passed, message) {

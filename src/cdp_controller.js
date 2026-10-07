@@ -301,11 +301,15 @@ function getCachedWindows() {
 }
 
 
-function getChatExtractExpr() {
+const SEMANTIC_EMPTY = '__TB_SEMANTIC_EMPTY__';
+
+function getChatExtractExpr(options = {}) {
+    const emptyMarker = options.authoritativeEmpty ? SEMANTIC_EMPTY : '';
     return `(() => {
         ${DriverFactory.getDriver().getLocatorsScript()}
         return (function() {
             let extractedText = "";
+            const semanticEmpty = ${JSON.stringify(emptyMarker)};
             try {
                 // Use the centralized locator to find the active conversation
                 const container = AG_UI.getVisibleChatContainer();
@@ -422,7 +426,56 @@ function getChatExtractExpr() {
                     return md;
                 }
 
+                function semanticArticles(root) {
+                    return Array.from(root.querySelectorAll('[role="article"][aria-label]')).filter(article => {
+                        const label = article.getAttribute('aria-label') || '';
+                        return label === 'User message' || label === 'Agent response';
+                    });
+                }
+
+                function assistantTextFromArticle(article) {
+                    let clone = article.cloneNode(true);
+                    Array.from(clone.querySelectorAll(
+                        'button[data-testid="worked-for-collapsible"], button[data-testid*="worked-for"], [class*="reasoning"], [data-testid*="thought"], [data-testid*="model"], style, svg, [class*="animate-spin"], footer, [role="contentinfo"]'
+                    )).forEach(el => el.remove());
+                    AG_UI.removeThoughtBlocks(clone);
+                    Array.from(clone.querySelectorAll('button, [role="button"]')).forEach(el => {
+                        const label = ((el.getAttribute('aria-label') || '') + ' ' + (el.textContent || '')).trim().toLowerCase();
+                        const iconOnly = !!(el.querySelector('svg') && !(el.textContent || '').trim());
+                        if (iconOnly || /^(copy|apply|run|accept|reject|cancel|submit|insert|terminal|review changes|good response|bad response|thumb)/.test(label)) el.remove();
+                    });
+                    const body = clone.querySelector('.leading-relaxed.select-text, .leading-relaxed, .prose, .markdown-body, [class*="rendered-markdown"]');
+                    const source = body || clone;
+                    let text = cleanText(nodeToMd(source));
+                    if (!text) text = cleanText(source.innerText || source.textContent);
+                    if (!text) return '';
+                    return text;
+                }
+
                 if (container) {
+                    const articles = semanticArticles(container);
+                    if (articles.length > 0) {
+                        let lastUserIndex = -1;
+                        articles.forEach((article, index) => {
+                            if (article.getAttribute('aria-label') === 'User message') lastUserIndex = index;
+                        });
+                        const start = lastUserIndex >= 0 ? lastUserIndex + 1 : 0;
+                        const msgs = [];
+                        if (lastUserIndex < 0) {
+                            articles.forEach(article => {
+                                if (article.getAttribute('aria-label') !== 'Agent response') return;
+                                const text = assistantTextFromArticle(article);
+                                if (text) msgs.push("🤖 Agent:\\n" + text);
+                            });
+                        } else {
+                            for (let i = start; i < articles.length; i++) {
+                                if (articles[i].getAttribute('aria-label') !== 'Agent response') continue;
+                                const text = assistantTextFromArticle(articles[i]);
+                                if (text) msgs.push("🤖 Agent:\\n" + text);
+                            }
+                        }
+                        extractedText = msgs.length > 0 ? msgs.join('\\n\\n') : semanticEmpty;
+                    } else {
                     const isClassic = typeof AG_UI !== 'undefined' && AG_UI.isClassicIDE && AG_UI.isClassicIDE();
                     let messageNodes = [];
 
@@ -556,14 +609,17 @@ function getChatExtractExpr() {
                             }
                         });
                         extractedText = msgs.join('\\n\\n');
-                    } else {
-                        // Last resort: clone container and strip interactive/layout elements
+                    } else if (!(typeof AG_UI !== 'undefined' && AG_UI.isClassicIDE && AG_UI.isClassicIDE())) {
+                        // Last resort: clone container and strip interactive/layout elements.
+                        // Classic IDE panels include caption/footer chrome, so an empty
+                        // article result must stay empty and allow the transcript fallback.
                         let clone = container.cloneNode(true);
                         Array.from(clone.querySelectorAll('style, script, .material-icons, .material-symbols-outlined, .material-symbols-rounded, .google-symbols, .codicon, [class*="icon"]')).forEach(el => el.remove());
                         Array.from(clone.querySelectorAll('button, input, textarea, nav, header, [role="navigation"], [data-project-card], .convo-pill')).forEach(el => el.remove());
                         extractedText = cleanText(clone.innerText || clone.textContent || "");
                     }
                 }
+                    }
             }
         } catch(e) {}
         return String(extractedText);
@@ -839,13 +895,14 @@ async function _domLatestExtraction(port, specificTargetId = null) {
             
             // Extract the whole chat history from the DOM
             const res = await Runtime.evaluate({
-                expression: getChatExtractExpr().replace('} catch(e) {}', '} catch(e) { extractedText = "ERROR_DOM: " + e.message; }'),
+                expression: getChatExtractExpr({ authoritativeEmpty: true }).replace('} catch(e) {}', '} catch(e) { extractedText = "ERROR_DOM: " + e.message; }'),
                 returnByValue: true
             });
             await client.close();
             
             if (res.result?.value && res.result.value.trim() !== '') {
                 const fullText = res.result.value.trim();
+                if (fullText === SEMANTIC_EMPTY) return "";
                 if (fullText.startsWith('ERROR_DOM:')) {
                     console.debug('[_domLatestExtraction] DOM error:', fullText);
                     continue; // Try next candidate
@@ -880,6 +937,17 @@ async function _domLatestExtraction(port, specificTargetId = null) {
                 // If no User tag found, the fallback might have just returned all text.
                 // We'll return the last 1500 chars to be safe, or just the whole thing
                 // if it's small, because we don't want to return a huge wall of text.
+                const hasSemanticMarkers = fullText.includes('🤖 Agent:') || fullText.includes('👤 User:');
+                if (hasSemanticMarkers) {
+                    const agentParts = fullText.split('🤖 Agent:');
+                    if (agentParts.length > 1) {
+                        const lastAgentText = agentParts.slice(1).join('\n\n').trim();
+                        if (lastAgentText && lastAgentText !== '\`\`' && !lastAgentText.startsWith('\`Gemini') && !lastAgentText.startsWith('\`Claude') && !lastAgentText.startsWith('\`GPT')) {
+                            return lastAgentText;
+                        }
+                    }
+                    return "";
+                }
                 if (fullText.length > 3000) {
                     return fullText.substring(fullText.length - 3000);
                 }
@@ -1084,6 +1152,9 @@ async function getFullLatestResponse(port, specificTargetId = null, threadName =
     // when lastResolvedThreadId pointed to a stale thread.
     try {
         const domResult = await _domLatestExtraction(port, targetIdToUse);
+        if (domResult === '') {
+            return { text: modalText.trim(), buttons: modalButtons };
+        }
         if ((domResult && domResult.trim().length > 0) || modalText) {
             const finalDomText = (domResult && domResult.trim().length > 0) ? (domResult + modalText) : modalText.trim();
             console.log(`[getFullLatestResponse] ✓ DOM extraction successful (${finalDomText.length} chars) | Target: ${targetIdToUse || 'auto'}`);

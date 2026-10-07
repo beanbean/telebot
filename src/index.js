@@ -746,11 +746,17 @@ async function sendLongMessage(ctx, text, prefix = '', buttons = null, replyToMs
         }
         if (sentMsgIds && sentMsgIds.length > 0) {
             const lastMsgId = sentMsgIds[sentMsgIds.length - 1];
-            lastSentMessageIdMap.set(ctx.chat.id, {
-                messageId: lastMsgId,
-                chatId: ctx.chat.id,
-                baseKeyboard: buttons
-            });
+            const replyBinding = replyToMsgId ? messageTargetMap.get(replyToMsgId) : null;
+            const targetId = replyBinding?.targetId || getPreferredTargetId();
+            const activeInfo = targetId ? await getActiveThreadInfo(CDP_PORT, targetId).catch(() => null) : null;
+            if (conversationId && activeInfo?.threadId === conversationId) {
+                lastSentMessageIdMap.set(conversationId, {
+                    messageId: lastMsgId,
+                    chatId: ctx.chat.id,
+                    conversationId,
+                    baseKeyboard: buttons
+                });
+            }
         }
         console.log(`sendLongMessage: Sent successfully`);
         return sentMsgIds;
@@ -2084,9 +2090,9 @@ function watchArtifacts(conversationId, retry = 0) {
                         if (url) {
                             console.log(`[Telegraph Watcher] Published ${normalizedFilename} to ${url}`);
                             
-                            // Send/update Telegram message with link
-                            const lastMsg = lastSentMessageIdMap.get('current') || Array.from(lastSentMessageIdMap.values()).pop();
-                            if (lastMsg && lastMsg.messageId) {
+                            // Attach the link only to the Telegram message that started this conversation.
+                            const lastMsg = lastSentMessageIdMap.get(conversationId);
+                            if (lastMsg && lastMsg.messageId && lastMsg.conversationId === conversationId) {
                                 const lookupChatId = lastMsg.chatId;
                                 const inlineKeyboard = getArtifactButtons(conversationId);
                                 const res = await bot.telegram.editMessageReplyMarkup(lookupChatId, lastMsg.messageId, undefined, {
@@ -2095,27 +2101,18 @@ function watchArtifacts(conversationId, retry = 0) {
                                     console.error('[Telegraph Watcher] Failed to update message keyboard:', err.message);
                                 });
                                 if (res && typeof res === 'object') {
-                                    lastSentMessageIdMap.set(lookupChatId, { ...lastMsg, baseKeyboard: { ...lastMsg.baseKeyboard, reply_markup: { inline_keyboard: inlineKeyboard } } });
-                                }
-                            } else {
-                                const msg = `📝 <b>${title} Updated!</b>\n\nRead on Telegraph:\n${url}`;
-                                for (const chatId of ALLOWED_CHAT_IDS) {
-                                    bot.telegram.sendMessage(chatId, msg, { 
-                                        parse_mode: 'HTML',
-                                        reply_markup: { inline_keyboard: [[{ text: '🌐 Open Artifact', url: url }]] }
-                                    }).catch(err => {
-                                        console.error(`[Telegraph Watcher] Failed to send message to ${chatId}:`, err.message);
-                                    });
+                                    lastSentMessageIdMap.set(conversationId, { ...lastMsg, baseKeyboard: { ...lastMsg.baseKeyboard, reply_markup: { inline_keyboard: inlineKeyboard } } });
                                 }
                             }
                         } else {
-                            // Telegraph disabled (Default) — send formatted artifact directly to Telegram chat
-                            const rawContent = fs.readFileSync(resolvedFilePath, 'utf-8');
-                            const inlineKeyboard = [[{ text: '📄 Download File', callback_data: `ff_${pathId}` }]];
-
-                            for (const chatId of ALLOWED_CHAT_IDS) {
-                                await sendFormattedTelegramMessage(bot, chatId, title, rawContent, inlineKeyboard).catch(err => {
-                                    console.error(`[Artifact Watcher] Failed to send artifact to ${chatId}:`, err.message);
+                            // Telegraph disabled — attach the file button to the existing Telegram message only.
+                            const lastMsg = lastSentMessageIdMap.get(conversationId);
+                            if (lastMsg && lastMsg.messageId && lastMsg.chatId && lastMsg.conversationId === conversationId) {
+                                const inlineKeyboard = [[{ text: '📄 Download File', callback_data: `ff_${pathId}` }]];
+                                await bot.telegram.editMessageReplyMarkup(lastMsg.chatId, lastMsg.messageId, undefined, {
+                                    inline_keyboard: inlineKeyboard
+                                }).catch(err => {
+                                    console.error(`[Artifact Watcher] Failed to update message keyboard for ${lastMsg.chatId}:`, err.message);
                                 });
                             }
                         }
@@ -5120,96 +5117,12 @@ async function init() {
     const preferredApp = (process.env.ANTIGRAVITY_PREFERRED_APP || 'ide').toLowerCase();
     const appDataName = preferredApp === 'agent' ? 'antigravity' : 'antigravity-ide';
     
-    // Track last proactive notification message per chat for edit-in-place
-    const proactiveMessageIds = new Map(); // chatId -> { messageId, timestamp, hasFeedback }
-    const PROACTIVE_RESET_MS = 5 * 60 * 1000; // Reset after 5 min of silence
-
     const taskWatcher = new TaskWatcher({
         appDataName,
         onNotification: async ({ conversationId, text, type }) => {
-            console.log(`[TaskWatcher] 📬 Proactive notification (${type}, conv: ${conversationId?.substring(0, 8)}, ${text.length} chars)`);
-
-            const header = '🔔 <b>' + t('task_watcher.proactive_msg') + '</b>\n\n';
-            // Truncate for Telegram 4096 char limit
-            const maxLen = 4096 - header.length - 10;
-            const body = text.length > maxLen ? text.substring(0, maxLen) + '…' : text;
-            const fullMsg = header + body;
-            const isFeedback = type === 'agent_proactive_feedback';
-
-            for (const chatId of ALLOWED_CHAT_IDS) {
-                try {
-                    const existing = proactiveMessageIds.get(chatId);
-                    const now = Date.now();
-
-                    // If we have a recent message, try to edit it
-                    // BUT: never overwrite a feedback message (with Proceed/Cancel) with a plain notification
-                    if (existing && (now - existing.timestamp) < PROACTIVE_RESET_MS) {
-                        // If existing has feedback buttons and new is plain, skip edit — send new
-                        if (existing.hasFeedback && !isFeedback) {
-                            console.log(`[TaskWatcher] Existing msg ${existing.messageId} has Proceed/Cancel buttons — sending new msg instead of overwriting`);
-                            // Fall through to send new message
-                        } else {
-                            try {
-                                const opts = { parse_mode: 'HTML' };
-                                if (isFeedback) {
-                                    opts.reply_markup = {
-                                        inline_keyboard: [
-                                            [
-                                                { text: t('artifact_feedback.proceed') || '✅ Proceed', callback_data: `fb_proceed_${conversationId.substring(0,8)}` },
-                                                { text: t('artifact_feedback.cancel') || '❌ Cancel', callback_data: `fb_cancel_${conversationId.substring(0,8)}` }
-                                            ]
-                                        ]
-                                    };
-                                }
-                                await bot.telegram.editMessageText(
-                                    chatId, existing.messageId, null,
-                                    fullMsg, opts
-                                );
-                                existing.timestamp = now;
-                                existing.hasFeedback = isFeedback;
-                                console.log(`[TaskWatcher] Edited existing notification msg ${existing.messageId}`);
-                                continue;
-                            } catch (editErr) {
-                                // Edit failed (message too old, deleted, or content unchanged)
-                                console.log(`[TaskWatcher] Edit failed, sending new: ${editErr.message}`);
-                            }
-                        }
-                    }
-
-                    let replyMarkup = undefined;
-                    if (type === 'agent_proactive_feedback') {
-                        replyMarkup = {
-                            inline_keyboard: [
-                                [
-                                    { text: t('artifact_feedback.proceed') || '✅ Proceed', callback_data: `fb_proceed_${conversationId.substring(0,8)}` },
-                                    { text: t('artifact_feedback.cancel') || '❌ Cancel', callback_data: `fb_cancel_${conversationId.substring(0,8)}` }
-                                ]
-                            ]
-                        };
-                    }
-
-                    // Send a new message
-                    try {
-                        const opts = { parse_mode: 'HTML' };
-                        if (replyMarkup) opts.reply_markup = replyMarkup;
-                        const sent = await bot.telegram.sendMessage(chatId, fullMsg, opts);
-                        proactiveMessageIds.set(chatId, { messageId: sent.message_id, timestamp: now, hasFeedback: isFeedback });
-                        console.log(`[TaskWatcher] Sent new notification msg ${sent.message_id}`);
-                    } catch (err) {
-                        if (err.message.includes("parse entities")) {
-                            const plain = fullMsg.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-                            const opts = {};
-                            if (replyMarkup) opts.reply_markup = replyMarkup;
-                            const sent = await bot.telegram.sendMessage(chatId, plain, opts);
-                            proactiveMessageIds.set(chatId, { messageId: sent.message_id, timestamp: now, hasFeedback: isFeedback });
-                            console.log(`[TaskWatcher] Sent plain text fallback ${sent.message_id}`);
-                        } else {
-                            throw err;
-                        }
-                    }
-                } catch (e) {
-                    console.error('[TaskWatcher] Failed to send notification:', e.message);
-                }
+            if (type === 'agent_proactive' || type === 'agent_proactive_feedback') {
+                console.log(`[TaskWatcher] Suppressed unsolicited IDE notification (${type}, conv: ${conversationId?.substring(0, 8)}, ${text.length} chars)`);
+                return;
             }
         }
     });

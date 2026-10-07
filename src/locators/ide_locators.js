@@ -125,7 +125,28 @@ const IDE_LOCATORS_SCRIPT = `
 
         isClassicIDE: () => true,
 
+        getConversationRoot: () => {
+            const articles = Array.from(document.querySelectorAll(
+                '[role="article"][aria-label="Agent response"], [role="article"][aria-label="User message"]'
+            ));
+            if (articles.length === 0) return null;
+            let ancestor = articles[0].parentElement;
+            while (ancestor && ancestor !== document.body) {
+                if (articles.every(article => ancestor.contains(article))) {
+                    const composer = ancestor.querySelector(
+                        '.interactive-input-editor, [aria-label*="chat input" i], [aria-label*="message input" i], [placeholder*="Ask" i]'
+                    );
+                    if (!composer || ancestor !== composer) return ancestor;
+                }
+                ancestor = ancestor.parentElement;
+            }
+            return articles[0].parentElement || null;
+        },
+
         getVisibleChatContainer: () => {
+            const conversation = AG_UI.getConversationRoot && AG_UI.getConversationRoot();
+            if (conversation && AG_UI.isVisible(conversation)) return conversation;
+
             const input = AG_UI.getChatInput();
             if (input) {
                 let el = input;
@@ -189,9 +210,28 @@ const IDE_LOCATORS_SCRIPT = `
         },
 
         getStopButton: () => {
-            const chatArea = AG_UI.getVisibleChatContainer() || document;
+            const scopes = [];
+            const chatArea = AG_UI.getVisibleChatContainer();
+            if (chatArea) scopes.push(chatArea);
+            const input = AG_UI.getChatInput();
+            let panel = input ? input.parentElement : null;
+            while (panel && panel !== document.body) {
+                if (panel.classList && (panel.classList.contains('interactive-session') || panel.classList.contains('chat-container') || panel.id === 'conversation' || panel.id === 'chat')) {
+                    if (!scopes.includes(panel)) scopes.push(panel);
+                    break;
+                }
+                panel = panel.parentElement;
+            }
+            if (scopes.length === 0) scopes.push(document);
+            const cancelBtn = scopes.flatMap(scope => Array.from(scope.querySelectorAll('button[aria-label]'))).find(btn => {
+                const label = (btn.getAttribute('aria-label') || '').trim();
+                return /^Cancel\\b/i.test(label) && AG_UI.isVisible(btn);
+            });
+            if (cancelBtn && !cancelBtn.closest('.modal, [role="dialog"], [data-testid*="interactive-modal"]')) {
+                return cancelBtn;
+            }
             
-            const stopIcons = Array.from(chatArea.querySelectorAll(
+            const stopIcons = Array.from(scopes[0].querySelectorAll(
                 "svg.lucide-square, [data-tooltip-id*='cancel'], [aria-label*='Stop'], [title*='Stop'], [aria-label*='Cancel'], [aria-label*='Durdur'], [title*='Durdur']"
             ));
             
@@ -200,7 +240,7 @@ const IDE_LOCATORS_SCRIPT = `
                 return icon.closest('button') || icon;
             }
             
-            const allBtns = Array.from(chatArea.querySelectorAll('button'));
+            const allBtns = Array.from(scopes[0].querySelectorAll('button'));
             return allBtns.find(b => {
                 if (b.closest('.modal, [role="dialog"], [data-testid*="interactive-modal"]')) return false;
                 if (b.querySelector('svg.lucide-square')) return true;
